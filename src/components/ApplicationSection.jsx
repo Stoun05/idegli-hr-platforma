@@ -1,7 +1,14 @@
+import { useRef, useState } from 'react'
+import '../application.css'
+import { applicationCopy } from '../data/applicationContent.js'
 import ArrowIcon from './ArrowIcon.jsx'
+
+const MAX_CV_SIZE = 5 * 1024 * 1024
+const ALLOWED_CV_EXTENSIONS = ['pdf', 'doc', 'docx']
 
 export default function ApplicationSection({
   t,
+  lang,
   audience,
   setAudience,
   submitted,
@@ -9,6 +16,79 @@ export default function ApplicationSection({
   selectedRole,
   handleSubmit,
 }) {
+  const [cvFile, setCvFile] = useState(null)
+  const [fileError, setFileError] = useState('')
+  const [consent, setConsent] = useState(false)
+  const [validationError, setValidationError] = useState('')
+  const fileInputRef = useRef(null)
+  const extra = applicationCopy[lang]
+
+  const resetValidation = () => {
+    setSubmitted(false)
+    setValidationError('')
+  }
+
+  const changeAudience = (nextAudience) => {
+    setAudience(nextAudience)
+    resetValidation()
+    setConsent(false)
+  }
+
+  const clearCv = () => {
+    setCvFile(null)
+    setFileError('')
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const handleFileChange = (event) => {
+    const file = event.target.files?.[0]
+    setSubmitted(false)
+    setValidationError('')
+
+    if (!file) {
+      clearCv()
+      return
+    }
+
+    const extension = file.name.split('.').pop()?.toLowerCase()
+
+    if (!extension || !ALLOWED_CV_EXTENSIONS.includes(extension)) {
+      setCvFile(null)
+      setFileError(extra.cvFormatError)
+      event.target.value = ''
+      return
+    }
+
+    if (file.size > MAX_CV_SIZE) {
+      setCvFile(null)
+      setFileError(extra.cvSizeError)
+      event.target.value = ''
+      return
+    }
+
+    setCvFile(file)
+    setFileError('')
+  }
+
+  const submitValidatedForm = (event) => {
+    event.preventDefault()
+    setSubmitted(false)
+    setValidationError('')
+
+    if (audience === 'candidate' && !cvFile) {
+      setFileError(extra.cvRequired)
+      setValidationError(extra.cvRequired)
+      return
+    }
+
+    if (!consent) {
+      setValidationError(extra.consentRequired)
+      return
+    }
+
+    handleSubmit(event)
+  }
+
   return (
     <section className="section form-section" id="apply">
       <div className="form-intro">
@@ -18,14 +98,14 @@ export default function ApplicationSection({
           <button
             type="button"
             className={audience === 'candidate' ? 'active' : ''}
-            onClick={() => { setAudience('candidate'); setSubmitted(false) }}
+            onClick={() => changeAudience('candidate')}
           >
             {t.candidateTab}
           </button>
           <button
             type="button"
             className={audience === 'employer' ? 'active' : ''}
-            onClick={() => { setAudience('employer'); setSubmitted(false) }}
+            onClick={() => changeAudience('employer')}
           >
             {t.employerTab}
           </button>
@@ -39,42 +119,121 @@ export default function ApplicationSection({
           <p>{audience === 'candidate' ? t.candidateText : t.employerText}</p>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={submitValidatedForm}>
           <div className="form-grid">
             <label>
               <span>{t.fields.name}</span>
-              <input required name="name" autoComplete="name" />
+              <input required name="name" autoComplete="name" onChange={resetValidation} />
             </label>
             <label>
               <span>{t.fields.phone}</span>
-              <input required name="phone" type="tel" autoComplete="tel" />
+              <input required name="phone" type="tel" autoComplete="tel" onChange={resetValidation} />
             </label>
             <label>
               <span>{t.fields.email}</span>
-              <input name="email" type="email" autoComplete="email" />
+              <input required name="email" type="email" autoComplete="email" onChange={resetValidation} />
             </label>
-            <label>
-              <span>{audience === 'candidate' ? t.fields.role : t.fields.company}</span>
-              {audience === 'candidate' ? (
-                <input
-                  key={selectedRole || 'candidate-role'}
-                  required
-                  name="role"
-                  defaultValue={selectedRole}
-                />
-              ) : (
-                <input required name="company" />
-              )}
+
+            {audience === 'candidate' ? (
+              <>
+                <label>
+                  <span>{extra.city}</span>
+                  <input required name="city" autoComplete="address-level2" onChange={resetValidation} />
+                </label>
+                <label>
+                  <span>{t.fields.role}</span>
+                  <input
+                    key={selectedRole || 'candidate-role'}
+                    required
+                    name="role"
+                    defaultValue={selectedRole}
+                    onChange={resetValidation}
+                  />
+                </label>
+                <label>
+                  <span>{t.fields.experience}</span>
+                  <select required name="experience" defaultValue="" onChange={resetValidation}>
+                    <option value="" disabled>{extra.experiencePlaceholder}</option>
+                    {extra.experienceOptions.map((option) => <option value={option} key={option}>{option}</option>)}
+                  </select>
+                </label>
+                <label>
+                  <span>{extra.languages}</span>
+                  <input required name="languages" placeholder="Türkmen, Русский, English" onChange={resetValidation} />
+                </label>
+                <label>
+                  <span>{extra.salary}</span>
+                  <input name="salary" inputMode="numeric" onChange={resetValidation} />
+                </label>
+                <label className="wide-field">
+                  <span>{t.fields.message}</span>
+                  <textarea name="message" rows="3" onChange={resetValidation} />
+                </label>
+
+                <div className="cv-field">
+                  <div className="cv-field-header">
+                    <strong>{extra.cvTitle}</strong>
+                    <small>{extra.cvHint}</small>
+                  </div>
+                  <div className="cv-dropzone">
+                    <input
+                      ref={fileInputRef}
+                      id="candidate-cv"
+                      name="cv"
+                      type="file"
+                      accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      onChange={handleFileChange}
+                    />
+                    <span className="cv-icon">CV</span>
+                    <div className="cv-copy">
+                      <strong>{cvFile ? cvFile.name : extra.cvChoose}</strong>
+                      <span>{cvFile ? `${extra.cvSelected} · ${(cvFile.size / 1024 / 1024).toFixed(2)} MB` : extra.cvHint}</span>
+                    </div>
+                    {cvFile ? (
+                      <button className="cv-action-button" type="button" onClick={clearCv}>{extra.cvRemove}</button>
+                    ) : (
+                      <label className="cv-action-button" htmlFor="candidate-cv">{extra.cvChoose}</label>
+                    )}
+                  </div>
+                  {fileError && <p className="form-error-message" role="alert">{fileError}</p>}
+                </div>
+              </>
+            ) : (
+              <>
+                <label>
+                  <span>{t.fields.company}</span>
+                  <input required name="company" onChange={resetValidation} />
+                </label>
+                <label>
+                  <span>{t.fields.vacancy}</span>
+                  <input required name="vacancy" onChange={resetValidation} />
+                </label>
+                <label className="wide-field">
+                  <span>{t.fields.message}</span>
+                  <textarea name="message" rows="4" onChange={resetValidation} />
+                </label>
+              </>
+            )}
+
+            <label className="consent-field">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(event) => {
+                  setConsent(event.target.checked)
+                  resetValidation()
+                }}
+              />
+              <span>{extra.consent}</span>
             </label>
-            <label>
-              <span>{audience === 'candidate' ? t.fields.experience : t.fields.vacancy}</span>
-              <input required name={audience === 'candidate' ? 'experience' : 'vacancy'} />
-            </label>
-            <label className="wide-field">
-              <span>{t.fields.message}</span>
-              <textarea name="message" rows="3" />
-            </label>
+
+            {validationError && (
+              <div className="form-validation-summary" role="alert">
+                <strong>{extra.validationTitle}:</strong> {validationError}
+              </div>
+            )}
           </div>
+
           <div className="form-submit-row">
             <button className="button button-accent" type="submit">
               {audience === 'candidate' ? t.submitCandidate : t.submitEmployer} <ArrowIcon />
