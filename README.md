@@ -17,6 +17,10 @@ IDEGLI üçin işgär saýlap-seçiş, Executive Search we karýera konsultasiý
 - Giňeldilen iş beriji işgär sargyt formasy
 - Kompaniýa, wezipe, işgär sany, tejribe, iş formaty, aýlyk we möhlet maglumatlary
 - Gizlin wakansiýa sargydy üçin aýratyn saýlaw
+- Checkbox we razylyk bloklarynyň responsive layout düzedişi
+- IDEGLI barada professional tanyşdyryş bölümi
+- Maksatly gözleg, gizlinlik we netijä çenli goldaw ýörelgeleri
+- Telefon, e-poçta we Aşgabat maglumatlary bilen kontakt bölümi
 - Düşnükli 4 tapgyrly recruitment prosesi
 - Accessibility we reduced-motion sazlamalary
 - GitHub Pages arkaly awtomatik ýerleşdiriş
@@ -50,17 +54,17 @@ npm run preview
 3. Wakansiýalar katalogy, gözleg, filtrler we giňişleýin maglumat paneli
 4. Giňeldilen dalaşgär formasy we CV ýüklemek interfeýsi
 5. Giňeldilen iş beriji işgär sargyt formasy
+6. Checkbox layout düzedişi, “Biz barada” we professional kontakt bölümleri
 
 ## Indiki tapgyrlar
 
-1. IDEGLI-niň hakyky logo, reňk we kontakt maglumatlaryny ýerleşdirmek
-2. “Biz barada” we kontakt bölümlerini kämilleşdirmek
-3. Backend we maglumat bazasyny birikdirmek
-4. CV faýllaryny hakyky bulut ammarynda saklamak
-5. Admin panel we kandidat statuslaryny dolandyrmak
-6. Telegram/email habarnamalary
-7. Iş beriji we dalaşgär şahsy kabinetleri
-8. SEO, analitika we hakyky domen
+1. IDEGLI-niň hakyky logo we resmi brend reňklerini ýerleşdirmek
+2. Backend we maglumat bazasyny birikdirmek
+3. CV faýllaryny hakyky bulut ammarynda saklamak
+4. Admin panel we kandidat statuslaryny dolandyrmak
+5. Telegram/email habarnamalary
+6. Iş beriji we dalaşgär şahsy kabinetleri
+7. SEO, analitika we hakyky domen
 
 ## Bellik
 
