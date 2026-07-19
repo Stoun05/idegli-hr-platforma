@@ -2,13 +2,6 @@
 
 IDEGLI üçin işgär saýlap-seçiş, Executive Search, karýera konsultasiýasy, kandidat arzalary we iş beriji sargytlaryny bir ýerde dolandyrýan iki dilli HR web-platforma.
 
-## Taslama kim üçin
-
-- iş gözleýän kandidatlar;
-- täze işgär gözleýän kompaniýalar;
-- IDEGLI HR topary;
-- karýera konsultasiýasyna mätäç hünärmenler.
-
 ## Esasy mümkinçilikler
 
 ### Public web-saýt
@@ -17,53 +10,44 @@ IDEGLI üçin işgär saýlap-seçiş, Executive Search, karýera konsultasiýas
 - premium, mobil enjamlara uýgun baş sahypa;
 - Recruitment, Executive Search we karýera konsultasiýasy;
 - gözleg we filtrler bilen wakansiýalar katalogy;
-- her wakansiýa üçin giňişleýin maglumat paneli;
-- saýlanan wakansiýany kandidat formasyna awtomatik geçirmek;
+- wakansiýanyň giňişleýin maglumat paneli;
+- saýlanan wakansiýany kandidat formasyna geçirmek;
 - “Biz barada”, iş prosesi we kontakt bölümleri.
 
-### Kandidat formasy
+### Kandidat we iş beriji formalary
 
-- şäher, wezipe, tejribe, diller we garaşylýan aýlyk;
-- PDF, DOC we DOCX CV saýlamak;
-- faýl görnüşi we 5 MB ölçeg barlagy;
+- giňişleýin kandidat maglumatlary we CV;
+- kompaniýa, wakansiýa, iş formaty, aýlyk we möhlet maglumatlary;
+- PDF, DOC we DOCX, iň köp 5 MB;
 - şahsy maglumatlaryň işlenmegine razylyk;
-- Supabase režiminde CV-ni private Storage-a hakyky ýüklemek;
-- local demo režiminde diňe CV metadata-syny saklamak.
-
-### Iş beriji formasy
-
-- kompaniýa we kontakt maglumatlary;
-- wezipe, işgär sany, iş formaty, tejribe we aýlyk aralygy;
-- borçlar, talaplar, şertler we möhletler;
-- gizlin wakansiýa sargydy;
-- Supabase/PostgreSQL ýa-da localStorage fallback.
+- Cloudflare Turnstile bot goragy;
+- server-side Siteverify;
+- IP/contact hash rate-limit;
+- production-da diňe Supabase Edge Function arkaly arza kabul etmek;
+- Supabase sazlanmasa localStorage demo fallback.
 
 ### Admin paneli
 
 - Supabase Auth e-poçta/parol giriş sahypasy;
 - diňe `admin` we `hr` rollary;
-- JWT sessiýasy we refresh akymy;
-- kandidat we iş beriji arzalaryny görmek;
+- kandidat we iş beriji arzalary;
 - gözleg, görnüş we status filtrleri;
-- status üýtgetmek we ýazgy pozmak;
+- status üýtgetmek, ýazgy we CV pozmak;
+- private CV download;
 - CSV eksporty;
-- private CV-ni JWT arkaly ýükläp almak;
-- arza pozulanda degişli private CV-ni hem pozmak;
-- her arza üçin içerki HR bellikleri;
-- belligiň awtory, roly we wagty;
-- arza döredilişiniň we status üýtgeşmeleriniň audit taryhy;
-- Telegram/e-poçta delivery statusy, wagty we synanyşyk sany.
+- içerki HR bellikleri;
+- database-trigger audit timeline;
+- Telegram/e-poçta delivery statuslary.
 
 ### Habarnamalar
 
-- täze kandidat arzasy üçin Telegram we e-poçta;
-- täze iş beriji sargydy üçin Telegram we e-poçta;
-- status üýtgeşmesi üçin habarnama;
-- islege görä täze HR belligi üçin habarnama;
-- Supabase Database Webhook → Edge Function akymy;
-- gizlin tokenleriň diňe Supabase Function secrets-de saklanmagy;
-- Resend idempotency key bilen gaýtalanan e-poçtanyň öňüni almak;
-- `notification_deliveries` tablisasynda delivery audit log-y.
+- täze kandidat arzasy;
+- täze iş beriji sargydy;
+- status üýtgeşmesi;
+- islege görä HR belligi;
+- Supabase Database Webhook → Edge Function;
+- Telegram Bot API we Resend;
+- delivery audit log we idempotency.
 
 ## Live salgylar
 
@@ -81,73 +65,67 @@ https://stoun05.github.io/idegli-hr-platforma/#/admin
 
 ## Backend režimleri
 
-### Local demo režimi
+### Local demo
 
-Supabase environment maglumatlary ýok bolsa:
+Supabase frontend maglumatlary ýok bolsa:
 
-- formalar localStorage-a ýazylýar;
+- forma localStorage-a ýazylýar;
 - maglumat diňe şol brauzerde görünýär;
+- CV-niň diňe metadata-sy saklanýar;
 - `#/admin` lokal demo panelini açýar;
-- CV-niň faýly saklanmaýar, diňe ady, ölçegi we MIME görnüşi saklanýar;
-- HR bellikleri, audit taryhy we habarnamalar işlemeýär;
-- brauzer maglumatlary arassalansa ýazgylar pozulýar.
+- remote audit, Turnstile we habarnamalar işlemeýär.
 
-### Supabase production režimi
+### Supabase production
 
 ```env
 VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
+VITE_TURNSTILE_SITE_KEY=YOUR_PUBLIC_SITE_KEY
 VITE_ENABLE_LOCAL_ADMIN_MIRROR=false
 ```
 
-Bu režimde:
+Production akymy:
 
-- formalar PostgreSQL-daky `applications` tablisasyna ýazylýar;
-- kandidat anonymous Supabase Auth sessiýasy alýar;
-- CV `candidate-cvs` private bucket-e kandidatyň UUID bukjasyna ýüklenýär;
-- public ulanyjy kandidat bazasyny, CV-leri, HR belliklerini ýa-da taryhy okap bilmeýär;
-- `admin` we `hr` rollary remote maglumatlary dolandyrýar;
-- status we bellik wakalary database trigger arkaly audit taryhyna ýazylýar;
-- `application_events` INSERT webhook-y `notify-hr` Edge Function-y çagyrýar;
-- Function Telegram Bot API we Resend arkaly HR toparyna habar berýär.
+```text
+React formasy
+    ↓
+Cloudflare Turnstile
+    ↓
+submit-application Edge Function
+    ↓
+Siteverify + hash rate-limit
+    ↓
+Private CV Storage + PostgreSQL
+    ↓
+Audit event + HR notification
+```
 
-> `service_role`, `sb_secret_...`, Telegram tokeni ýa-da Resend key hiç wagt frontend, GitHub Pages ýa-da `VITE_*` üýtgeýjisine goýulmaýar.
+Public ulanyja `applications` tablisasynda INSERT ýa-da `candidate-cvs` bucket-de upload rugsady berilmeýär. Bu hereketleri diňe server-side Edge Function service role ýerine ýetirýär.
 
-## Supabase sazlamasy
+> `service_role`, `sb_secret_...`, Turnstile secret, Telegram tokeni we Resend key hiç wagt frontend ýa-da GitHub Pages build-e goýulmaýar.
 
-SQL faýllaryny şu tertipde işlediň:
+## Supabase SQL tertibi
 
 ```text
 supabase/schema.sql
 supabase/storage.sql
 supabase/hr_activity.sql
 supabase/notifications.sql
+supabase/abuse_protection.sql
 supabase/assign_admin_role.sql
 ```
 
-Doly görkezmeler:
+## Edge Functions
 
 ```text
-docs/SUPABASE_SETUP.md
-docs/ADMIN_AUTH_SETUP.md
-docs/CV_STORAGE_SETUP.md
-docs/HR_ACTIVITY_SETUP.md
-docs/NOTIFICATIONS_SETUP.md
-```
-
-Production üçin Supabase Dashboard-da **Anonymous Sign-Ins** hem açylmaly. Public anonymous sign-in akymy üçin CAPTCHA ýa-da Cloudflare Turnstile sazlamak maslahat berilýär.
-
-## Edge Function deployment
-
-Function:
-
-```text
+supabase/functions/submit-application/index.ts
 supabase/functions/notify-hr/index.ts
 ```
 
-CLI:
+Deployment:
 
 ```bash
+supabase functions deploy submit-application --project-ref YOUR_PROJECT_REF
 supabase functions deploy notify-hr --project-ref YOUR_PROJECT_REF
 ```
 
@@ -164,31 +142,50 @@ SUPABASE_ACCESS_TOKEN
 SUPABASE_PROJECT_ID
 ```
 
-## GitHub Pages deployment
+## GitHub Pages maglumatlary
 
-Repository → Settings → Pages bölüminde source hökmünde `GitHub Actions` saýlanýar.
-
-Frontend build secret-lary:
+Repository secrets:
 
 ```text
 VITE_SUPABASE_URL
 VITE_SUPABASE_PUBLISHABLE_KEY
 ```
 
-Her `main` commit-den soň GitHub Pages deployment awtomatik işleýär. Supabase Edge Function deployment-i howpsuzlyk sebäpli manual workflow hökmünde aýratyn işleýär.
+Repository variables:
 
-## Lokal işletmek
-
-```bash
-npm install
-npm run dev
+```text
+VITE_TURNSTILE_SITE_KEY
+VITE_ENABLE_LOCAL_ADMIN_MIRROR=false
 ```
 
-Production build:
+## Turnstile we rate-limit
 
-```bash
-npm run build
-npm run preview
+Default çäkler:
+
+```text
+Bir IP:       8 synanyşyk / 1 sagat
+Bir kontakt:  3 synanyşyk / 24 sagat
+```
+
+`submission_attempts` tablisasy raw IP, e-poçta ýa-da telefon saklamaýar. Diňe server-only pepper bilen SHA-256 hash, outcome we wagt saklanýar.
+
+Turnstile widget:
+
+- explicit SPA render;
+- `action: idegli_application`;
+- hostname barlagy;
+- token her iberişden soň reset;
+- production site key ýok bolsa remote forma ýapyk.
+
+## Dokumentasiýa
+
+```text
+docs/SUPABASE_SETUP.md
+docs/ADMIN_AUTH_SETUP.md
+docs/CV_STORAGE_SETUP.md
+docs/HR_ACTIVITY_SETUP.md
+docs/NOTIFICATIONS_SETUP.md
+docs/ABUSE_PROTECTION_SETUP.md
 ```
 
 ## Tehnologiýalar
@@ -197,6 +194,7 @@ npm run preview
 - Vite
 - Arassa CSS
 - Browser localStorage
+- Cloudflare Turnstile
 - Supabase Auth
 - Supabase REST Data API
 - Supabase private Storage
@@ -225,7 +223,8 @@ docs/
 ├── ADMIN_AUTH_SETUP.md
 ├── CV_STORAGE_SETUP.md
 ├── HR_ACTIVITY_SETUP.md
-└── NOTIFICATIONS_SETUP.md
+├── NOTIFICATIONS_SETUP.md
+└── ABUSE_PROTECTION_SETUP.md
 
 supabase/
 ├── config.toml
@@ -233,8 +232,11 @@ supabase/
 ├── storage.sql
 ├── hr_activity.sql
 ├── notifications.sql
+├── abuse_protection.sql
 ├── assign_admin_role.sql
 └── functions/
+    ├── submit-application/
+    │   └── index.ts
     └── notify-hr/
         └── index.ts
 ```
@@ -250,40 +252,42 @@ supabase/
 7. LocalStorage maglumat gatlagy we demo admin paneli
 8. Supabase/PostgreSQL schema we RLS
 9. Supabase Auth, `admin`/`hr` rollary we remote admin paneli
-10. Anonymous kandidat sessiýasy we private CV Storage
-11. HR bellikleri, status taryhy we database-trigger audit timeline-y
-12. Telegram/e-poçta Edge Function habarnamalary we delivery audit log-y
+10. Private CV Storage
+11. HR bellikleri we audit timeline
+12. Telegram/e-poçta Edge Function habarnamalary
+13. Cloudflare Turnstile, server-side Siteverify we privacy-preserving rate-limit
 
-## 12-nji tapgyrda goşulanlar
+## 13-nji tapgyrda goşulanlar
 
-- `notification_deliveries` tablisa we RLS;
-- `notify-hr` Supabase Edge Function;
-- webhook secret barlagy;
-- Telegram HTML habarlary;
-- Resend HTML/text e-poçtalary;
-- e-poçta idempotency key;
-- Telegram we e-poçta kanallarynyň garaşsyz işlemegi;
-- şowsuz synanyşyk sebäpleriniň saklanmagy;
-- admin kartasynda delivery taryhy;
-- manual Supabase Function deployment workflow-y;
-- doly notification sazlama dokumentasiýasy.
+- explicit Cloudflare Turnstile React komponenti;
+- public Turnstile site key konfigurasiýasy;
+- `submit-application` Edge Function;
+- mandatory Siteverify, action we hostname barlagy;
+- CORS origin allowlist;
+- `submission_attempts` anti-abuse tablisa;
+- IP sagatlyk we kontakt günlük çäkleri;
+- raw maglumat saklamazdan SHA-256 + pepper hash;
+- HTTP 429 we `Retry-After` jogaby;
+- service-role CV upload we DB insert rollback;
+- public direct applications INSERT we Storage upload rugsatlarynyň aýrylmagy;
+- iki Edge Function-y deploy edýän GitHub workflow;
+- Turnstile/rate-limit sazlama dokumentasiýasy.
 
 ## Çäklendirmeler
 
 - häzirki wakansiýalar demo maglumatlarydyr;
-- Supabase secret-lary goşulmasa live saýt local demo režiminde işleýär;
-- private CV Storage diňe `schema.sql` we `storage.sql` işledilenden soň işleýär;
-- HR bellikleri we audit taryhy diňe `hr_activity.sql` işledilenden soň işleýär;
-- habarnamalar diňe `notifications.sql`, Function secrets, Edge Function deployment we Database Webhook sazlanandan soň işleýär;
-- Resend iberiji domeni tassyklanmalydyr;
+- Supabase secret-lary ýok bolsa live saýt local demo režiminde işleýär;
+- Supabase bar, emma Turnstile site key ýok bolsa production forma iberişi ýapyk bolýar;
+- SQL migration-lar we Edge Function deployment aýratyn ýerine ýetirilmelidir;
+- Turnstile secret we rate-limit pepper Supabase secrets-de sazlanmalydyr;
+- Resend domeni tassyklanmalydyr;
 - Telegram bot degişli chat-a habar ibermäge rugsatly bolmalydyr;
-- production-da CAPTCHA/Turnstile we rate-limit goragy entek goşulmady;
 - kandidat we iş beriji şahsy kabinetleri entek ýok;
 - resmi IDEGLI logo we gutarnykly brend reňkleri entek tassyklanmady.
 
 ## Indiki ýol kartasy
 
-1. CAPTCHA/Turnstile we forma rate-limit goragy
-2. Kandidat we iş beriji şahsy kabinetleri
-3. Hakyky IDEGLI logo, brend reňkleri we wakansiýalar
-4. SEO, analitika we hakyky domen
+1. Kandidat we iş beriji şahsy kabinetleri
+2. Hakyky IDEGLI logo, brend reňkleri we wakansiýalar
+3. SEO, analitika we hakyky domen
+4. Maglumat saklama möhleti we awtomatik privacy cleanup
