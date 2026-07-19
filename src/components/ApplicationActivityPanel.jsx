@@ -5,6 +5,7 @@ const copy = {
   tm: {
     notesTitle: 'HR bellikleri',
     historyTitle: 'Kandidat taryhy',
+    notificationsTitle: 'Habarnamalar',
     placeholder: 'Söhbetdeşlik, aragatnaşyk ýa-da indiki ädim barada içerki bellik ýazyň...',
     addNote: 'Belligi goşmak',
     saving: 'Saklanýar...',
@@ -12,16 +13,25 @@ const copy = {
     confirmDelete: 'Bu HR belligini pozmalymy?',
     noNotes: 'Häzirlikçe içerki bellik ýok.',
     noHistory: 'Taryh ýazgysy entek ýok.',
+    noNotifications: 'Habarnama iberiş ýazgysy entek ýok.',
     created: 'Arza döredildi',
     statusChanged: 'Status üýtgedildi',
     noteAdded: 'HR belligi goşuldy',
     system: 'Ulgam',
     unknown: 'Näbelli ulanyjy',
     maxLength: 'Iň köp 4000 nyşan',
+    telegram: 'Telegram',
+    email: 'E-poçta',
+    sent: 'Iberildi',
+    failed: 'Şowsuz',
+    processing: 'Iberilýär',
+    skipped: 'Geçirildi',
+    attempts: 'synanyşyk',
   },
   ru: {
     notesTitle: 'Заметки HR',
     historyTitle: 'История кандидата',
+    notificationsTitle: 'Уведомления',
     placeholder: 'Добавьте внутреннюю заметку об интервью, контакте или следующем шаге...',
     addNote: 'Добавить заметку',
     saving: 'Сохраняем...',
@@ -29,12 +39,20 @@ const copy = {
     confirmDelete: 'Удалить эту заметку HR?',
     noNotes: 'Внутренних заметок пока нет.',
     noHistory: 'История пока пуста.',
+    noNotifications: 'Истории отправки уведомлений пока нет.',
     created: 'Заявка создана',
     statusChanged: 'Статус изменён',
     noteAdded: 'Добавлена заметка HR',
     system: 'Система',
     unknown: 'Неизвестный пользователь',
     maxLength: 'До 4000 символов',
+    telegram: 'Telegram',
+    email: 'Email',
+    sent: 'Отправлено',
+    failed: 'Ошибка',
+    processing: 'Отправляется',
+    skipped: 'Пропущено',
+    attempts: 'попыток',
   },
 }
 
@@ -69,10 +87,15 @@ function eventText(event, t, labels) {
   return t.created
 }
 
+function deliveryStatus(delivery, t) {
+  return t[delivery.status] || delivery.status
+}
+
 export default function ApplicationActivityPanel({
   lang,
   notes = [],
   events = [],
+  deliveries = [],
   busy = false,
   onAddNote,
   onDeleteNote,
@@ -164,6 +187,30 @@ export default function ApplicationActivityPanel({
               </div>
             </article>
           )) : <p className="activity-empty">{t.noHistory}</p>}
+        </div>
+      </div>
+
+      <div className="activity-notification-column">
+        <div className="activity-column-heading">
+          <h3>{t.notificationsTitle}</h3>
+          <span>{deliveries.length}</span>
+        </div>
+
+        <div className="activity-delivery-list">
+          {deliveries.length ? deliveries.map((delivery) => (
+            <article className={`activity-delivery delivery-${delivery.status}`} key={delivery.id}>
+              <div>
+                <span className={`delivery-channel channel-${delivery.channel}`}>
+                  {delivery.channel === 'telegram' ? t.telegram : t.email}
+                </span>
+                <strong>{deliveryStatus(delivery, t)}</strong>
+              </div>
+              <p>
+                {formatDate(delivery.sentAt || delivery.updatedAt || delivery.createdAt, lang)} · {delivery.attempts} {t.attempts}
+              </p>
+              {delivery.errorMessage && <small title={delivery.errorMessage}>{delivery.errorMessage}</small>}
+            </article>
+          )) : <p className="activity-empty">{t.noNotifications}</p>}
         </div>
       </div>
     </section>
