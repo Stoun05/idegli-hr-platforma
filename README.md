@@ -48,7 +48,11 @@ IDEGLI üçin işgär saýlap-seçiş, Executive Search, karýera konsultasiýas
 - status üýtgetmek we ýazgy pozmak;
 - CSV eksporty;
 - private CV-ni JWT arkaly ýükläp almak;
-- arza pozulanda degişli private CV-ni hem pozmak.
+- arza pozulanda degişli private CV-ni hem pozmak;
+- her arza üçin içerki HR bellikleri;
+- belligiň awtory, roly we wagty;
+- arza döredilişiniň we status üýtgeşmeleriniň audit taryhy;
+- database trigger bilen üýtgedilip bilinmeýän kandidat timeline-y.
 
 ## Live salgylar
 
@@ -74,6 +78,7 @@ Supabase environment maglumatlary ýok bolsa:
 - maglumat diňe şol brauzerde görünýär;
 - `#/admin` lokal demo panelini açýar;
 - CV-niň faýly saklanmaýar, diňe ady, ölçegi we MIME görnüşi saklanýar;
+- HR bellikleri we audit taryhy işlemeýär;
 - brauzer maglumatlary arassalansa ýazgylar pozulýar.
 
 ### 2. Supabase production režimi
@@ -90,9 +95,10 @@ Bu režimde:
 - kandidat anonymous Supabase Auth sessiýasy alýar;
 - CV `candidate-cvs` private bucket-e diňe kandidatyň UUID bukjasyna ýüklenýär;
 - CV Storage ýoly arza metadata-syna birikdirilýär;
-- public ulanyjy kandidat bazasyny ýa-da başga CV-leri okap bilmeýär;
-- `admin` we `hr` rollary remote maglumatlary hem-de CV-leri dolandyrýar;
-- arza ýazgysy şowsuz bolsa, ýüklenen CV awtomatik yzyna pozulýar.
+- public ulanyjy kandidat bazasyny, CV-leri, HR belliklerini ýa-da taryhy okap bilmeýär;
+- `admin` we `hr` rollary remote maglumatlary dolandyrýar;
+- arza ýazgysy şowsuz bolsa, ýüklenen CV awtomatik yzyna pozulýar;
+- status üýtgeşmeleri we bellik goşulyşy database trigger arkaly audit taryhyna ýazylýar.
 
 > `service_role`, `sb_secret_...` ýa-da başga secret açary hiç wagt frontend, GitHub Pages ýa-da `VITE_*` üýtgeýjisine goýmaň.
 
@@ -103,6 +109,7 @@ SQL faýllaryny şu tertipde işlediň:
 ```text
 supabase/schema.sql
 supabase/storage.sql
+supabase/hr_activity.sql
 supabase/assign_admin_role.sql
 ```
 
@@ -112,6 +119,7 @@ Doly görkezmeler:
 docs/SUPABASE_SETUP.md
 docs/ADMIN_AUTH_SETUP.md
 docs/CV_STORAGE_SETUP.md
+docs/HR_ACTIVITY_SETUP.md
 ```
 
 Production üçin Supabase Dashboard-da **Anonymous Sign-Ins** hem açylmaly. Public anonymous sign-in akymy üçin CAPTCHA ýa-da Cloudflare Turnstile sazlamak maslahat berilýär.
@@ -154,6 +162,7 @@ npm run preview
 - Supabase private Storage
 - PostgreSQL
 - Row Level Security
+- PostgreSQL triggers
 - GitHub Actions
 - GitHub Pages
 
@@ -170,11 +179,13 @@ src/
 docs/
 ├── SUPABASE_SETUP.md
 ├── ADMIN_AUTH_SETUP.md
-└── CV_STORAGE_SETUP.md
+├── CV_STORAGE_SETUP.md
+└── HR_ACTIVITY_SETUP.md
 
 supabase/
 ├── schema.sql
 ├── storage.sql
+├── hr_activity.sql
 └── assign_admin_role.sql
 ```
 
@@ -190,23 +201,26 @@ supabase/
 8. Supabase/PostgreSQL schema we RLS
 9. Supabase Auth, `admin`/`hr` rollary we remote admin paneli
 10. Anonymous kandidat sessiýasy, private CV Storage, admin download we bilelikde pozma akymy
+11. HR bellikleri, status taryhy we database-trigger audit timeline-y
 
-## Soňky möhüm üýtgeşmeler
+## 11-nji tapgyrda goşulanlar
 
-- `candidate-cvs` private bucket we 5 MB/MIME çäkleri;
-- kandidat üçin UUID-esasly private storage ýoly;
-- anonymous Auth sessiýasyny gaýtadan ulanmak we refresh etmek;
-- `submitter_id` arkaly arza bilen CV eýesini baglanyşdyrmak;
-- upload üstünlikli, arza şowsuz bolsa rollback;
-- admin panelden private CV download;
-- arza pozulanda CV-niň hem Storage-dan pozulmagy;
-- CSV eksportyna CV storage ýoluny goşmak.
+- `application_notes` içerki HR bellik tablisasy;
+- `application_events` üýtgedilip bilinmeýän audit taryhy;
+- arza döredilende awtomatik `created` wakasy;
+- status üýtgände öňki we täze status bilen `status_changed` wakasy;
+- bellik goşulanda `note_added` wakasy;
+- öňki arzalar üçin başlangyç taryh backfill-i;
+- admin kartlarynda iki sütünli bellik we timeline paneli;
+- bellik goşmak, awtoryny/wagtyny görmek we pozmak;
+- ähli remote maglumatlary bir wagtda täzeden ýüklemek.
 
 ## Çäklendirmeler
 
 - häzirki wakansiýalar demo maglumatlarydyr;
 - Supabase secret-lary goşulmasa live saýt local demo režiminde işleýär;
 - private CV Storage diňe `schema.sql` we `storage.sql` işledilenden soň işleýär;
+- HR bellikleri we audit taryhy diňe `hr_activity.sql` işledilenden soň işleýär;
 - anonymous sign-in abuse-dan goramak üçin production-da CAPTCHA/Turnstile gerek;
 - kandidat we iş beriji şahsy kabinetleri entek ýok;
 - Telegram/e-poçta habarnamalary entek birikdirilmedi;
@@ -214,9 +228,8 @@ supabase/
 
 ## Indiki ýol kartasy
 
-1. Admin panelde HR bellikleri we kandidat status taryhy
-2. Telegram we e-poçta habarnamalary
-3. CAPTCHA/Turnstile we forma rate-limit goragy
-4. Kandidat we iş beriji şahsy kabinetleri
-5. Hakyky IDEGLI logo, brend reňkleri we wakansiýalar
-6. SEO, analitika we hakyky domen
+1. Telegram we e-poçta habarnamalary
+2. CAPTCHA/Turnstile we forma rate-limit goragy
+3. Kandidat we iş beriji şahsy kabinetleri
+4. Hakyky IDEGLI logo, brend reňkleri we wakansiýalar
+5. SEO, analitika we hakyky domen
