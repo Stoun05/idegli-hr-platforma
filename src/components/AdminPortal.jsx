@@ -13,7 +13,7 @@ import {
   fetchRemoteApplications,
   updateRemoteApplicationStatus,
 } from '../services/supabaseAdminService.js'
-import { downloadPrivateCv } from '../services/cvStorageService.js'
+import { deleteCandidateCv, downloadPrivateCv } from '../services/cvStorageService.js'
 
 export default function AdminPortal({ lang, setLang }) {
   const [session, setSession] = useState(null)
@@ -133,6 +133,13 @@ export default function AdminPortal({ lang, setLang }) {
     setError('')
 
     try {
+      const record = applications.find((item) => item.id === id)
+
+      if (record?.cv?.storagePath) {
+        const cvDeleted = await deleteCandidateCv(record.cv.storagePath, activeSession.accessToken)
+        if (!cvDeleted) throw new Error('CV file could not be deleted from private storage.')
+      }
+
       await deleteRemoteApplication(activeSession.accessToken, id)
       setApplications((current) => current.filter((item) => item.id !== id))
     } catch (deleteError) {
