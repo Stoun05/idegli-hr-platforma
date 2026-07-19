@@ -16,16 +16,21 @@ export default function ApplicationSection({
   setSubmitted,
   selectedRole,
   handleSubmit,
+  backendMode,
 }) {
   const [cvFile, setCvFile] = useState(null)
   const [fileError, setFileError] = useState('')
   const [consent, setConsent] = useState(false)
   const [validationError, setValidationError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submissionMode, setSubmissionMode] = useState('')
   const fileInputRef = useRef(null)
   const extra = applicationCopy[lang]
+  const usesSupabase = backendMode === 'supabase'
 
   const resetValidation = () => {
     setSubmitted(false)
+    setSubmissionMode('')
     setValidationError('')
   }
 
@@ -44,8 +49,7 @@ export default function ApplicationSection({
 
   const handleFileChange = (event) => {
     const file = event.target.files?.[0]
-    setSubmitted(false)
-    setValidationError('')
+    resetValidation()
 
     if (!file) {
       clearCv()
@@ -72,9 +76,10 @@ export default function ApplicationSection({
     setFileError('')
   }
 
-  const submitValidatedForm = (event) => {
+  const submitValidatedForm = async (event) => {
     event.preventDefault()
     setSubmitted(false)
+    setSubmissionMode('')
     setValidationError('')
 
     if (audience === 'candidate' && !cvFile) {
@@ -88,35 +93,52 @@ export default function ApplicationSection({
       return
     }
 
-    const formData = new FormData(event.currentTarget)
+    const form = event.currentTarget
+    const formData = new FormData(form)
     formData.delete('cv')
     const fields = Object.fromEntries(formData.entries())
 
     if (audience === 'employer') {
-      fields.confidential = event.currentTarget.elements.confidential?.checked === true
+      fields.confidential = form.elements.confidential?.checked === true
     }
 
-    const wasSaved = handleSubmit({
-      audience,
-      fields,
-      cv: audience === 'candidate' && cvFile
-        ? {
-            name: cvFile.name,
-            size: cvFile.size,
-            type: cvFile.type,
-          }
-        : null,
-    })
+    setIsSubmitting(true)
 
-    if (!wasSaved) {
-      setValidationError(extra.storageError)
-      return
+    try {
+      const result = await handleSubmit({
+        audience,
+        fields,
+        cv: audience === 'candidate' && cvFile
+          ? {
+              name: cvFile.name,
+              size: cvFile.size,
+              type: cvFile.type,
+            }
+          : null,
+      })
+
+      if (!result?.ok) {
+        const errorMessage = result?.mode === 'supabase-error' && result?.backupSaved
+          ? extra.remoteError
+          : extra.storageError
+        setValidationError(errorMessage)
+        return
+      }
+
+      setSubmissionMode(result.mode)
+      form.reset()
+      setConsent(false)
+      if (audience === 'candidate') clearCv()
+    } catch {
+      setValidationError(usesSupabase ? extra.remoteError : extra.storageError)
+    } finally {
+      setIsSubmitting(false)
     }
-
-    event.currentTarget.reset()
-    setConsent(false)
-    if (audience === 'candidate') clearCv()
   }
+
+  const submissionMessage = submissionMode === 'supabase'
+    ? extra.submittedSupabase
+    : extra.submittedLocal
 
   return (
     <section className="section form-section" id="apply">
@@ -146,6 +168,13 @@ export default function ApplicationSection({
           <span className="application-kicker">{audience === 'candidate' ? 'CANDIDATE' : 'EMPLOYER'} / 01</span>
           <h3>{audience === 'candidate' ? t.candidateTitle : t.employerTitle}</h3>
           <p>{audience === 'candidate' ? t.candidateText : t.employerText}</p>
+          <div className={`backend-mode-card ${usesSupabase ? 'is-remote' : 'is-local'}`}>
+            <span aria-hidden="true" />
+            <div>
+              <strong>{usesSupabase ? extra.backendSupabase : extra.backendLocal}</strong>
+              <small>{usesSupabase ? extra.backendSupabaseNote : extra.backendLocalNote}</small>
+            </div>
+          </div>
         </div>
 
         <form onSubmit={submitValidatedForm}>
@@ -258,10 +287,17 @@ export default function ApplicationSection({
           </div>
 
           <div className="form-submit-row">
-            <button className="button button-accent" type="submit">
-              {audience === 'candidate' ? t.submitCandidate : t.submitEmployer} <ArrowIcon />
+            <button className="button button-accent" type="submit" disabled={isSubmitting}>
+              {isSubmitting
+                ? extra.submitting
+                : audience === 'candidate'
+                  ? t.submitCandidate
+                  : t.submitEmployer}
+              {!isSubmitting && <ArrowIcon />}
             </button>
-            <small>{submitted ? t.submitted : t.privacy}</small>
+            <small className={submitted ? 'submit-success-message' : ''}>
+              {submitted ? submissionMessage : t.privacy}
+            </small>
           </div>
         </form>
       </div>
