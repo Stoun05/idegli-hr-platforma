@@ -87,7 +87,34 @@ export default function ApplicationSection({
       return
     }
 
-    handleSubmit(event)
+    const formData = new FormData(event.currentTarget)
+    formData.delete('cv')
+    const fields = Object.fromEntries(formData.entries())
+
+    if (audience === 'employer') {
+      fields.confidential = event.currentTarget.elements.confidential?.checked === true
+    }
+
+    const wasSaved = handleSubmit({
+      audience,
+      fields,
+      cv: cvFile
+        ? {
+            name: cvFile.name,
+            size: cvFile.size,
+            type: cvFile.type,
+          }
+        : null,
+    })
+
+    if (!wasSaved) {
+      setValidationError(extra.storageError)
+      return
+    }
+
+    event.currentTarget.reset()
+    setConsent(false)
+    if (audience === 'candidate') clearCv()
   }
 
   return (
