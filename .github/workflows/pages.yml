@@ -20,6 +20,7 @@ jobs:
     env:
       VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
       VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
       VITE_ENABLE_LOCAL_ADMIN_MIRROR: ${{ vars.VITE_ENABLE_LOCAL_ADMIN_MIRROR }}
     steps:
       - name: Checkout
