@@ -8,6 +8,7 @@ function toDatabaseRecord(application) {
     locale: application.locale || 'tm',
     fields: application.fields,
     cv_metadata: application.cv || null,
+    submitter_id: application.submitterId || null,
     consent: true,
   }
 }
@@ -24,18 +25,22 @@ async function readErrorDetail(response) {
   }
 }
 
-export async function submitSupabaseApplication(application) {
+export async function submitSupabaseApplication(application, accessToken = '') {
   if (!backendConfig.hasSupabase) {
     throw new Error('Supabase is not configured.')
   }
 
+  const headers = {
+    apikey: backendConfig.supabasePublishableKey,
+    'Content-Type': 'application/json',
+    Prefer: 'return=minimal',
+  }
+
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`
+
   const response = await fetch(`${backendConfig.supabaseUrl}/rest/v1/applications`, {
     method: 'POST',
-    headers: {
-      apikey: backendConfig.supabasePublishableKey,
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal',
-    },
+    headers,
     body: JSON.stringify(toDatabaseRecord(application)),
   })
 
