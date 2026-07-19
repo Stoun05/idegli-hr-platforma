@@ -1,3 +1,4 @@
+import '../footer.css'
 import { contactInfo } from '../data/companyContent.js'
 
 export default function Footer({ t }) {
