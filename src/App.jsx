@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './company.css'
 import AboutSection from './components/AboutSection.jsx'
+import AdminDashboard from './components/AdminDashboard.jsx'
 import ApplicationSection from './components/ApplicationSection.jsx'
 import ContactSection from './components/ContactSection.jsx'
 import FinalCta from './components/FinalCta.jsx'
@@ -12,6 +13,7 @@ import ProcessSection from './components/ProcessSection.jsx'
 import ServicesSection from './components/ServicesSection.jsx'
 import { companyCopy } from './data/companyContent.js'
 import { copy, jobs } from './data/siteContent.js'
+import { saveApplication } from './services/applicationStore.js'
 
 function App() {
   const [lang, setLang] = useState('tm')
@@ -19,7 +21,14 @@ function App() {
   const [audience, setAudience] = useState('candidate')
   const [submitted, setSubmitted] = useState(false)
   const [selectedRole, setSelectedRole] = useState('')
+  const [isAdmin, setIsAdmin] = useState(() => window.location.hash === '#/admin')
   const t = useMemo(() => ({ ...copy[lang], ...companyCopy[lang] }), [lang])
+
+  useEffect(() => {
+    const handleHashChange = () => setIsAdmin(window.location.hash === '#/admin')
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
 
   const scrollToForm = (nextAudience, role = '') => {
     setAudience(nextAudience)
@@ -28,9 +37,14 @@ function App() {
     document.getElementById('apply')?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const handleSubmit = (event) => {
-    event.preventDefault()
-    setSubmitted(true)
+  const handleSubmit = (application) => {
+    const savedApplication = saveApplication(application)
+    setSubmitted(Boolean(savedApplication))
+    return Boolean(savedApplication)
+  }
+
+  if (isAdmin) {
+    return <AdminDashboard lang={lang} setLang={setLang} />
   }
 
   return (
