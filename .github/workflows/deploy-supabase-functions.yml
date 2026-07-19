@@ -33,5 +33,8 @@ jobs:
           version: latest
           github-token: ${{ github.token }}
 
-      - name: Deploy notify-hr function
+      - name: Deploy secure application function
+        run: supabase functions deploy submit-application --project-ref "$SUPABASE_PROJECT_ID"
+
+      - name: Deploy HR notification function
         run: supabase functions deploy notify-hr --project-ref "$SUPABASE_PROJECT_ID"
