@@ -122,6 +122,13 @@ export default function ApplicationSection({
 
         <form onSubmit={submitValidatedForm}>
           <div className="form-grid">
+            {audience === 'employer' && (
+              <div className="form-section-label wide-field">
+                <span>01</span>
+                <strong>{extra.employerCompanySection}</strong>
+              </div>
+            )}
+
             <label>
               <span>{t.fields.name}</span>
               <input required name="name" autoComplete="name" onChange={resetValidation} />
