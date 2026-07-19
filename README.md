@@ -7,11 +7,14 @@ IDEGLI üçin işgär saýlap-seçiş, Executive Search we karýera konsultasiý
 - Türkmen we rus dilleri
 - Premium, mobil enjamlara uýgunlaşýan baş sahypa
 - Recruitment, Executive Search we karýera konsultasiýasy bölümleri
-- Nusga wakansiýalar katalogy
+- Gözleg we üç görnüşli filtr bilen wakansiýalar katalogy
+- Her wakansiýa üçin giňişleýin maglumat paneli
+- Saýlanan wakansiýanyň arza formasyna awtomatik geçirilmegi
 - Iş gözleýänler üçin arza formasy
 - Iş berijiler üçin işgär sargyt formasy
 - Düşnükli 4 tapgyrly recruitment prosesi
 - Accessibility we reduced-motion sazlamalary
+- GitHub Pages arkaly awtomatik ýerleşdiriş
 
 ## Işletmek
 
@@ -32,13 +35,21 @@ npm run preview
 - React
 - Vite
 - Arassa CSS
+- GitHub Actions
+- GitHub Pages
+
+## Tamamlanan tapgyrlar
+
+1. Başlangyç premium baş sahypa
+2. Kod gurluşyny aýratyn komponentlere bölmek
+3. Wakansiýalar katalogy, gözleg, filtrler we giňişleýin maglumat paneli
 
 ## Indiki tapgyrlar
 
-1. IDEGLI-niň hakyky logo, reňk we kontakt maglumatlaryny ýerleşdirmek
-2. Wakansiýalar üçin aýratyn sahypalary döretmek
-3. Backend we maglumat bazasyny birikdirmek
-4. CV ýüklemek mümkinçiligini goşmak
+1. Dalaşgär formasyny giňeltmek
+2. CV ýüklemek interfeýsini goşmak
+3. IDEGLI-niň hakyky logo, reňk we kontakt maglumatlaryny ýerleşdirmek
+4. Backend we maglumat bazasyny birikdirmek
 5. Admin panel we kandidat statuslaryny dolandyrmak
 6. Telegram/email habarnamalary
 7. Iş beriji we dalaşgär şahsy kabinetleri
@@ -46,4 +57,4 @@ npm run preview
 
 ## Bellik
 
-Häzirki arza formalary diňe demo interfeýsidir. Olar entek serwere maglumat ibermeýär.
+Häzirki wakansiýalar we arza formalary demo görnüşindedir. Formalar entek serwere maglumat ibermeýär. Hakyky wakansiýa şertleri IDEGLI tarapyndan tassyklanandan soň demo maglumatlary çalşylar.
