@@ -1,112 +1,90 @@
 # IDEGLI Supabase sazlamasy
 
-Bu görkezme public arza formalaryny Supabase/PostgreSQL bazasyna ibermek, private CV Storage-i, HR audit taryhyny, Telegram/e-poçta habarnamalaryny we goralan remote admin panelini sazlamak üçin niýetlenendir.
+Bu görkezme public formalary, private CV Storage-i, Turnstile/rate-limit goragyny, remote admin panelini, HR audit taryhyny we Telegram/e-poçta habarnamalaryny sazlamak üçin niýetlenendir.
 
-## 1. Supabase proýektini döretmek
+## 1. Supabase proýekti
 
 Supabase Dashboard-da täze proýekt dörediň. Database parolyny ygtybarly ýerde saklaň.
 
-## 2. Anonymous Sign-Ins açmak
+Anonymous Sign-Ins indi gerek däl. Public kandidat we iş beriji arzalary `submit-application` Edge Function service role arkaly kabul edilýär.
 
-Supabase Dashboard → Authentication → Providers → Anonymous Sign-Ins bölüminde anonymous girişleri işjeňleşdiriň.
+## 2. SQL tertibi
 
-Bu diňe kandidat CV upload akymy üçin ulanylýar. Kandidat e-poçtasyz sessiýa alýar we CV diňe şol sessiýanyň UUID bukjasyna ýüklenýär.
-
-Production açylyşdan öň Cloudflare Turnstile ýa-da CAPTCHA sazlamak maslahat berilýär.
-
-## 3. SQL gurluşlaryny goşmak
-
-Supabase Dashboard → SQL Editor bölüminde şu tertipde işlediň:
+SQL Editor-de şu tertipde işlediň:
 
 ```text
 supabase/schema.sql
 supabase/storage.sql
 supabase/hr_activity.sql
 supabase/notifications.sql
+supabase/abuse_protection.sql
 supabase/assign_admin_role.sql
 ```
 
-### `schema.sql`
+- `schema.sql` — applications tablisa, statuslar we diňe HR/admin RLS;
+- `storage.sql` — private `candidate-cvs` bucket, diňe HR/admin read/delete;
+- `hr_activity.sql` — HR bellikleri we audit timeline;
+- `notifications.sql` — Telegram/e-poçta delivery log;
+- `abuse_protection.sql` — hash rate-limit synanyşyk log-y;
+- `assign_admin_role.sql` — Auth ulanyjysyna `admin` ýa-da `hr` roly.
 
-- `applications` tablisasyny döredýär;
-- kandidat we iş beriji görnüşlerini çäklendirýär;
-- `submitter_id` arkaly kandidat arzasyny anonymous Auth ulanyjysy bilen baglanyşdyrýar;
-- statuslaryň dogry sanawyny belleýär;
-- public INSERT we HR-admin RLS düzgünlerini döredýär.
+`schema.sql` we `storage.sql` public direct INSERT/upload rugsatlaryny aýyrýar. Production ýazgylary diňe Edge Function tarapyndan döredilýär.
 
-### `storage.sql`
+## 3. Frontend maglumatlary
 
-- `candidate-cvs` private bucket döredýär;
-- ölçegi 5 MB bilen çäklendirýär;
-- PDF, DOC we DOCX MIME görnüşlerine rugsat berýär;
-- anonymous kandidata diňe öz bukjasyna upload/read/delete rugsadyny berýär;
-- `admin` we `hr` roluna ähli CV-leri okamak we pozmak rugsadyny berýär.
-
-### `hr_activity.sql`
-
-- içerki HR bellikleri üçin `application_notes` tablisasyny döredýär;
-- üýtgedilip bilinmeýän taryh üçin `application_events` tablisasyny döredýär;
-- arza döredilende, status üýtgände we bellik goşulanda trigger arkaly audit ýazgysyny döredýär;
-- öňden bar bolan arzalar üçin başlangyç taryh ýazgysyny döredýär.
-
-### `notifications.sql`
-
-- `notification_deliveries` tablisany döredýär;
-- Telegram/e-poçta synanyşyklaryny, statusyny we provider ID-sini saklaýar;
-- bir waka/kanal/alyjy kombinasiýasynyň gaýtalanmagynyň öňüni alýar;
-- delivery taryhyny diňe `admin`/`hr` roluna görkezýär;
-- server-side Edge Function-a service-role arkaly log ýazmaga mümkinçilik berýär.
-
-### `assign_admin_role.sql`
-
-- öň döredilen Supabase Auth ulanyjysyna `admin` ýa-da `hr` roluny `app_metadata` içinde berýär.
-
-## 4. Frontend açarlary
-
-Supabase Dashboard → Project Settings → API Keys bölüminden alyň:
-
-- Project URL;
-- Publishable key (`sb_publishable_...`).
-
-Lokal iş üçin `.env.example` faýly `.env` diýip göçüriň:
+Lokal `.env`:
 
 ```env
 VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
+VITE_TURNSTILE_SITE_KEY=YOUR_PUBLIC_TURNSTILE_SITE_KEY
 VITE_ENABLE_LOCAL_ADMIN_MIRROR=false
 ```
 
-`service_role` ýa-da secret key-ni hiç wagt `VITE_*` üýtgeýjisine, GitHub repository-a ýa-da GitHub Pages build-ine goýmaň.
+GitHub Actions:
 
-Publishable key public API çagyryşlarynda `apikey` header-de ulanylýar. Anonymous kandidat ýa-da admin login edeninden soň `Authorization` header-de degişli Supabase Auth JWT tokeni iberilýär.
-
-## 5. GitHub Pages secret-lary
-
-Repository → Settings → Secrets and variables → Actions:
+Repository secrets:
 
 ```text
 VITE_SUPABASE_URL
 VITE_SUPABASE_PUBLISHABLE_KEY
 ```
 
-`VITE_ENABLE_LOCAL_ADMIN_MIRROR` test üçin Actions Variable bolup biler; production-da `false` saklaň.
+Repository variables:
 
-## 6. Admin ulanyjysyny we roluny sazlamak
+```text
+VITE_TURNSTILE_SITE_KEY
+VITE_ENABLE_LOCAL_ADMIN_MIRROR=false
+```
+
+Turnstile site key public bolýar. Turnstile secret, service role, Telegram tokeni ýa-da Resend key frontend-e goýulmaýar.
+
+## 4. Turnstile we rate-limit
 
 Doly görkezme:
 
 ```text
-docs/ADMIN_AUTH_SETUP.md
+docs/ABUSE_PROTECTION_SETUP.md
 ```
 
-Gysgaça:
+Edge Function secret-lary:
 
-1. Authentication → Users bölüminde admin ulanyjysyny dörediň.
-2. `supabase/assign_admin_role.sql` içindäki e-poçtany we roly üýtgediň.
-3. SQL-ni işlediň.
-4. Ulanyjy çykyp, täzeden giriş etsin.
+```text
+TURNSTILE_SECRET_KEY
+RATE_LIMIT_PEPPER
+ALLOWED_SITE_ORIGINS
+TURNSTILE_ALLOWED_HOSTNAMES
+IP_LIMIT_PER_HOUR
+CONTACT_LIMIT_PER_DAY
+```
 
-## 7. CV Storage sazlamasy
+Production form akymy:
+
+```text
+Turnstile → Siteverify → hash rate-limit → private CV upload → applications INSERT
+```
+
+## 5. CV Storage
 
 Doly görkezme:
 
@@ -114,109 +92,106 @@ Doly görkezme:
 docs/CV_STORAGE_SETUP.md
 ```
 
-Kandidat akymy:
+Kandidat CV-si:
 
-1. Anonymous sessiýa döredilýär ýa-da refresh edilýär.
-2. CV `candidate-cvs/anonymous/<user-id>/<random-id>.<ext>` ýoluna ýüklenýär.
-3. Storage ýoly `applications.cv_metadata` içine ýazylýar.
-4. Arza ýazgysy şowsuz bolsa, faýl yzyna pozulýar.
-5. HR/admin CV-ni private authenticated endpoint arkaly ýükläp alýar.
-6. Arza pozulsa, degişli CV hem pozulýar.
+```text
+candidate-cvs/applications/<application-id>/<random-id>.<ext>
+```
 
-## 8. HR bellikleri we audit taryhy
+ýoluna service role arkaly ýüklenýär. DB INSERT şowsuz bolsa faýl yzyna pozulýar. HR/admin private JWT bilen download/delete edýär.
+
+## 6. Admin Auth
 
 Doly görkezme:
+
+```text
+docs/ADMIN_AUTH_SETUP.md
+```
+
+1. Authentication → Users bölüminde admin ulanyjysyny dörediň.
+2. `assign_admin_role.sql` içindäki e-poçtany we roly üýtgediň.
+3. SQL-ni işlediň.
+4. Ulanyjy çykyp, täzeden giriş etsin.
+
+## 7. HR bellikleri we audit
 
 ```text
 docs/HR_ACTIVITY_SETUP.md
 ```
 
-Remote admin panelde:
+Remote admin panelde bellik, status taryhy, awtor, rol we wagt görkezilýär. Public ulanyjy bu maglumatlary okap bilmeýär.
 
-- içerki bellik ýazylýar;
-- belligiň awtory, roly we wagty saklanýar;
-- status üýtgeşmesi database trigger tarapyndan awtomatik ýazylýar;
-- public ulanyjy bellikleri we taryhy okap bilmeýär.
-
-## 9. Telegram we e-poçta habarnamalary
-
-Doly görkezme:
+## 8. Telegram we e-poçta
 
 ```text
 docs/NOTIFICATIONS_SETUP.md
 ```
 
-Esasy akym:
+Akym:
 
 ```text
 application_events INSERT
         ↓
-Supabase Database Webhook
+Database Webhook
         ↓
 notify-hr Edge Function
         ↓
-Telegram Bot API + Resend Email API
-        ↓
-notification_deliveries audit log
+Telegram + Resend
 ```
 
-Function secret-lary frontendden aýratyn Supabase Edge Function secrets bölüminde saklanýar.
+## 9. Edge Functions deployment
 
-Edge Function deployment:
+Function-lar:
+
+```text
+submit-application
+notify-hr
+```
+
+CLI:
 
 ```bash
+supabase functions deploy submit-application --project-ref YOUR_PROJECT_REF
 supabase functions deploy notify-hr --project-ref YOUR_PROJECT_REF
 ```
 
-Manual GitHub workflow üçin:
+Ýa-da GitHub Actions-daky manual `Deploy Supabase Functions` workflow-y ulanyň.
+
+Gerekli GitHub secrets:
 
 ```text
 SUPABASE_ACCESS_TOKEN
 SUPABASE_PROJECT_ID
 ```
 
-repository secrets gerek.
-
 ## 10. Režimler
 
 ### Supabase sazlanmadyk bolsa
 
-- arza `localStorage`-da saklanýar;
-- `#/admin` demo panelinde görünýär;
+- formalar localStorage-a ýazylýar;
+- `#/admin` lokal demo panelini açýar;
 - CV-niň diňe metadata-sy saklanýar;
-- HR bellikleri, audit taryhy we habarnamalar elýeterli däl.
+- Turnstile, remote admin, audit we habarnamalar işlemeýär.
 
 ### Supabase sazlanan bolsa
 
-- formalar `applications` tablisasyna iberilýär;
-- kandidat CV private Storage-a ýüklenýär;
-- `#/admin` Supabase Auth login sahypasyny açýar;
-- diňe `admin` ýa-da `hr` roly remote maglumatlary dolandyrýar;
-- status, bellik we notification delivery taryhy admin panelde görünýär;
-- täze waka Database Webhook arkaly Telegram/e-poçta iberişini başlaýar.
+- public forma diňe Turnstile site key hem sazlanan ýagdaýynda açyk bolýar;
+- arza `submit-application` Edge Function arkaly geçýär;
+- rate-limit we server-side Siteverify hökmany;
+- CV private Storage-a ýüklenýär;
+- admin panel Supabase Auth we RLS bilen goralýar;
+- audit we notification delivery taryhy görünýär.
 
-## 11. Lokal admin mirror
-
-Diňe test üçin:
-
-```env
-VITE_ENABLE_LOCAL_ADMIN_MIRROR=true
-```
-
-Production-da `false` saklamak maslahat berilýär.
-
-## 12. Barlaýyş
+## 11. Barlaýyş
 
 1. SQL faýllaryny görkezilen tertipde işlediň.
-2. Frontend GitHub secret-laryny goşuň.
-3. Anonymous Sign-Ins açyň.
-4. Admin hasaby we `admin`/`hr` roly dörediň.
-5. Edge Function secret-laryny goşuň.
-6. `notify-hr` function-y deploy ediň.
-7. `application_events` INSERT Database Webhook dörediň.
-8. Kandidat formasyny CV bilen dolduryň.
-9. Storage, `applications`, `application_events` we `notification_deliveries` tablisalaryny barlaň.
-10. Telegram we e-poçta habarynyň gelendigini barlaň.
-11. Admin panelde CV, HR bellikleri, taryh we notification delivery statusyny barlaň.
-12. Statusy üýtgedip ikinji habarnamany barlaň.
-13. Roly ýok ulanyjynyň goralan maglumatlary okap bilmeýändigini barlaň.
+2. Cloudflare Turnstile widget dörediň.
+3. Frontend site key we Supabase maglumatlaryny GitHub-a goşuň.
+4. Edge Function secret-laryny Supabase-a goşuň.
+5. Iki Edge Function-y deploy ediň.
+6. Admin hasaby we rol dörediň.
+7. Notification Database Webhook dörediň.
+8. Kandidat we iş beriji formalaryny barlaň.
+9. `submission_attempts` içinde raw IP/contact ýokdugyny barlaň.
+10. Public direct applications INSERT we Storage upload synanyşyklarynyň ret edilýändigini barlaň.
+11. Admin panelde CV, bellik, taryh we delivery statuslaryny barlaň.
