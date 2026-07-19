@@ -1,8 +1,6 @@
 import { backendConfig, getBackendMode } from '../config/backend.js'
 import { saveApplication as saveLocalApplication } from './applicationStore.js'
-import { deleteCandidateCv, uploadCandidateCv } from './cvStorageService.js'
-import { submitSupabaseApplication } from './supabaseApplicationService.js'
-import { getCandidateSubmitterSession } from './supabaseSubmitterAuthService.js'
+import { submitSecureApplication } from './secureApplicationService.js'
 
 function localApplication(application) {
   return {
@@ -21,45 +19,31 @@ export async function submitApplication(application) {
       : { ok: false, mode: 'local-demo', error: 'Local browser storage is unavailable.' }
   }
 
-  let submitterSession = null
-  let uploadedCv = null
+  if (!backendConfig.hasSecureSubmission) {
+    return {
+      ok: false,
+      mode: 'supabase-configuration-error',
+      error: 'Cloudflare Turnstile site key is missing.',
+    }
+  }
 
   try {
-    let remoteApplication = application
-
-    if (application.audience === 'candidate') {
-      if (!application.cvFile) throw new Error('Candidate CV file is required.')
-
-      submitterSession = await getCandidateSubmitterSession()
-      uploadedCv = await uploadCandidateCv(application.cvFile, submitterSession)
-      remoteApplication = {
-        ...application,
-        cv: uploadedCv,
-        submitterId: submitterSession.user.id,
-      }
-    }
-
-    const remoteRecord = await submitSupabaseApplication(
-      remoteApplication,
-      submitterSession?.accessToken || '',
-    )
+    const remoteRecord = await submitSecureApplication(application)
 
     if (backendConfig.enableLocalAdminMirror) {
-      saveLocalApplication(localApplication(remoteApplication))
+      saveLocalApplication(localApplication(application))
     }
 
     return { ok: true, mode: 'supabase', record: remoteRecord }
   } catch (error) {
-    if (uploadedCv?.storagePath && submitterSession?.accessToken) {
-      await deleteCandidateCv(uploadedCv.storagePath, submitterSession.accessToken).catch(() => false)
-    }
-
     const backupRecord = saveLocalApplication(localApplication(application))
 
     return {
       ok: false,
       mode: 'supabase-error',
       backupSaved: Boolean(backupRecord),
+      code: error?.code || '',
+      retryAfter: Number(error?.retryAfter || 0),
       error: error instanceof Error ? error.message : 'Application submission failed.',
     }
   }
