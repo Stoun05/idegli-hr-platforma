@@ -2,22 +2,8 @@ import { backendConfig } from '../config/backend.js'
 
 export const CV_BUCKET = 'candidate-cvs'
 
-const MIME_TYPES = {
-  pdf: 'application/pdf',
-  doc: 'application/msword',
-  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-}
-
 function encodePath(path) {
   return path.split('/').map(encodeURIComponent).join('/')
-}
-
-function extensionOf(filename = '') {
-  return filename.split('.').pop()?.toLowerCase() || ''
-}
-
-function uniqueId() {
-  return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
 
 async function readFailure(response, fallback) {
@@ -29,44 +15,6 @@ async function readFailure(response, fallback) {
     return payload.message || payload.error || payload.statusCode || raw
   } catch {
     return raw
-  }
-}
-
-export async function uploadCandidateCv(file, session) {
-  const extension = extensionOf(file?.name)
-  const contentType = MIME_TYPES[extension]
-
-  if (!file || !contentType || !session?.accessToken || !session?.user?.id) {
-    throw new Error('CV upload data is incomplete.')
-  }
-
-  const storagePath = `anonymous/${session.user.id}/${uniqueId()}.${extension}`
-  const response = await fetch(
-    `${backendConfig.supabaseUrl}/storage/v1/object/${CV_BUCKET}/${encodePath(storagePath)}`,
-    {
-      method: 'POST',
-      headers: {
-        apikey: backendConfig.supabasePublishableKey,
-        Authorization: `Bearer ${session.accessToken}`,
-        'Content-Type': contentType,
-        'Cache-Control': 'no-store',
-        'x-upsert': 'false',
-      },
-      body: file,
-    },
-  )
-
-  if (!response.ok) {
-    throw new Error(await readFailure(response, 'CV could not be uploaded.'))
-  }
-
-  return {
-    bucket: CV_BUCKET,
-    storagePath,
-    name: file.name,
-    size: file.size,
-    type: contentType,
-    uploadedAt: new Date().toISOString(),
   }
 }
 
