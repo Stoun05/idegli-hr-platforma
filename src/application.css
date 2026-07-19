@@ -1,0 +1,181 @@
+.form-grid select {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+  outline: none;
+  color: #fff;
+  background: transparent;
+  padding: 8px 0 12px;
+  color-scheme: dark;
+}
+
+.form-grid select:focus {
+  border-color: var(--accent);
+}
+
+.cv-field {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 12px;
+}
+
+.cv-field-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.cv-field-header strong {
+  font-size: 0.78rem;
+}
+
+.cv-field-header small {
+  color: rgba(255, 255, 255, 0.43);
+  font-size: 0.65rem;
+}
+
+.cv-dropzone {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 92px;
+  padding: 18px;
+  border: 1px dashed rgba(255, 255, 255, 0.26);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.035);
+  transition: border-color 180ms ease, background 180ms ease;
+}
+
+.cv-dropzone:hover,
+.cv-dropzone:focus-within {
+  border-color: var(--accent);
+  background: rgba(216, 255, 99, 0.045);
+}
+
+.cv-dropzone input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cv-icon {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  color: var(--forest);
+  background: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.cv-copy {
+  min-width: 0;
+}
+
+.cv-copy strong,
+.cv-copy span {
+  display: block;
+}
+
+.cv-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+}
+
+.cv-copy span {
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.43);
+  font-size: 0.67rem;
+}
+
+.cv-action-button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  color: #fff;
+  background: transparent;
+  font-size: 0.7rem;
+  font-weight: 760;
+}
+
+.cv-action-button:hover {
+  color: var(--forest);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.form-error-message {
+  margin: 0;
+  color: #ffb9ae;
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.consent-field {
+  grid-column: 1 / -1;
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: flex-start;
+  gap: 11px !important;
+  padding-top: 4px;
+}
+
+.consent-field input {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+}
+
+.consent-field span {
+  color: rgba(255, 255, 255, 0.58) !important;
+  font-size: 0.69rem !important;
+  font-weight: 500 !important;
+  line-height: 1.55;
+}
+
+.form-validation-summary {
+  grid-column: 1 / -1;
+  padding: 13px 15px;
+  border: 1px solid rgba(255, 133, 117, 0.35);
+  border-radius: 12px;
+  color: #ffb9ae;
+  background: rgba(255, 92, 71, 0.08);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+  .cv-field,
+  .consent-field,
+  .form-validation-summary {
+    grid-column: 1;
+  }
+
+  .cv-field-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .cv-dropzone {
+    grid-template-columns: auto 1fr;
+  }
+
+  .cv-action-button {
+    grid-column: 1 / -1;
+    width: fit-content;
+  }
+}
