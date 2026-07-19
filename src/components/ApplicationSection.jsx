@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import '../application.css'
+import '../backend.css'
 import { applicationCopy } from '../data/applicationContent.js'
 import ArrowIcon from './ArrowIcon.jsx'
 import EmployerRequestFields from './EmployerRequestFields.jsx'
