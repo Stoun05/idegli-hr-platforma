@@ -29,16 +29,17 @@ export default function ApplicationSection({
     setValidationError('')
   }
 
-  const changeAudience = (nextAudience) => {
-    setAudience(nextAudience)
-    resetValidation()
-    setConsent(false)
-  }
-
   const clearCv = () => {
     setCvFile(null)
     setFileError('')
     if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const changeAudience = (nextAudience) => {
+    setAudience(nextAudience)
+    resetValidation()
+    setConsent(false)
+    if (nextAudience === 'employer') clearCv()
   }
 
   const handleFileChange = (event) => {
@@ -98,7 +99,7 @@ export default function ApplicationSection({
     const wasSaved = handleSubmit({
       audience,
       fields,
-      cv: cvFile
+      cv: audience === 'candidate' && cvFile
         ? {
             name: cvFile.name,
             size: cvFile.size,
