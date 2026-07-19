@@ -1,0 +1,251 @@
+.application-activity-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+  gap: 18px;
+  margin: 0 0 26px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(23, 35, 30, 0.1);
+}
+
+.activity-notes-column,
+.activity-history-column {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid rgba(23, 35, 30, 0.11);
+  border-radius: 18px;
+  background: #f8f7f2;
+}
+
+.activity-column-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.activity-column-heading h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 720;
+}
+
+.activity-column-heading > span {
+  display: grid;
+  place-items: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 999px;
+  color: #13231d;
+  background: #d8ff63;
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.activity-note-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.activity-note-form textarea {
+  width: 100%;
+  min-height: 112px;
+  resize: vertical;
+  padding: 13px 14px;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 13px;
+  outline: none;
+  color: #17231e;
+  background: #fff;
+  font: inherit;
+  line-height: 1.55;
+}
+
+.activity-note-form textarea:focus {
+  border-color: #315448;
+  box-shadow: 0 0 0 3px rgba(49, 84, 72, 0.08);
+}
+
+.activity-note-form > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.activity-note-form small {
+  color: #7a837e;
+  font-size: 0.64rem;
+}
+
+.activity-note-form button,
+.activity-note-card button {
+  min-height: 36px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  background: #315448;
+  font-size: 0.68rem;
+  font-weight: 780;
+}
+
+.activity-note-form button:hover:not(:disabled) {
+  color: #13231d;
+  background: #d8ff63;
+}
+
+.activity-note-form button:disabled,
+.activity-note-card button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.activity-local-error {
+  margin: 12px 0 0;
+  color: #8c3028;
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.activity-note-list,
+.activity-timeline {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.activity-note-card {
+  padding: 15px;
+  border: 1px solid rgba(23, 35, 30, 0.1);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.activity-note-card > p {
+  margin: 0;
+  white-space: pre-wrap;
+  color: #26332d;
+  font-size: 0.78rem;
+  line-height: 1.65;
+}
+
+.activity-note-card footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(23, 35, 30, 0.08);
+}
+
+.activity-note-card footer span {
+  min-width: 0;
+  overflow: hidden;
+  color: #7a837e;
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-note-card button {
+  min-height: 30px;
+  color: #8c3028;
+  background: rgba(140, 48, 40, 0.08);
+}
+
+.activity-note-card button:hover:not(:disabled) {
+  color: #fff;
+  background: #8c3028;
+}
+
+.activity-timeline {
+  position: relative;
+}
+
+.activity-timeline::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 7px;
+  width: 1px;
+  background: rgba(23, 35, 30, 0.14);
+}
+
+.activity-event {
+  position: relative;
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.activity-event-dot {
+  position: relative;
+  z-index: 1;
+  width: 15px;
+  height: 15px;
+  margin-top: 2px;
+  border: 4px solid #f8f7f2;
+  border-radius: 50%;
+  background: #315448;
+}
+
+.activity-event.event-created .activity-event-dot {
+  background: #d8ff63;
+  box-shadow: inset 0 0 0 1px rgba(23, 35, 30, 0.2);
+}
+
+.activity-event.event-note_added .activity-event-dot {
+  background: #7e8eae;
+}
+
+.activity-event strong {
+  display: block;
+  color: #26332d;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.activity-event p {
+  margin: 5px 0 0;
+  color: #7a837e;
+  font-size: 0.62rem;
+  line-height: 1.45;
+}
+
+.activity-empty {
+  margin: 0;
+  padding: 18px;
+  border: 1px dashed rgba(23, 35, 30, 0.18);
+  border-radius: 13px;
+  color: #7a837e;
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+@media (max-width: 1000px) {
+  .application-activity-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .activity-notes-column,
+  .activity-history-column {
+    padding: 15px;
+  }
+
+  .activity-note-form > div,
+  .activity-note-card footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .activity-note-card footer span {
+    white-space: normal;
+  }
+}
