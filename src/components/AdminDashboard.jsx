@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import '../admin.css'
+import '../admin-remote.css'
 import {
   clearApplications,
   getApplications,
