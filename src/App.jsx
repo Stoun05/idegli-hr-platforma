@@ -13,7 +13,7 @@ import ProcessSection from './components/ProcessSection.jsx'
 import ServicesSection from './components/ServicesSection.jsx'
 import { companyCopy } from './data/companyContent.js'
 import { copy, jobs } from './data/siteContent.js'
-import { saveApplication } from './services/applicationStore.js'
+import { getApplicationBackendMode, submitApplication } from './services/applicationRepository.js'
 
 function App() {
   const [lang, setLang] = useState('tm')
@@ -23,6 +23,7 @@ function App() {
   const [selectedRole, setSelectedRole] = useState('')
   const [isAdmin, setIsAdmin] = useState(() => window.location.hash === '#/admin')
   const t = useMemo(() => ({ ...copy[lang], ...companyCopy[lang] }), [lang])
+  const backendMode = getApplicationBackendMode()
 
   useEffect(() => {
     const handleHashChange = () => setIsAdmin(window.location.hash === '#/admin')
@@ -37,10 +38,10 @@ function App() {
     document.getElementById('apply')?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const handleSubmit = (application) => {
-    const savedApplication = saveApplication(application)
-    setSubmitted(Boolean(savedApplication))
-    return Boolean(savedApplication)
+  const handleSubmit = async (application) => {
+    const result = await submitApplication({ ...application, locale: lang })
+    setSubmitted(result.ok)
+    return result
   }
 
   if (isAdmin) {
@@ -73,6 +74,7 @@ function App() {
           setSubmitted={setSubmitted}
           selectedRole={selectedRole}
           handleSubmit={handleSubmit}
+          backendMode={backendMode}
         />
         <ContactSection t={t} scrollToForm={scrollToForm} />
         <FinalCta t={t} scrollToForm={scrollToForm} />
