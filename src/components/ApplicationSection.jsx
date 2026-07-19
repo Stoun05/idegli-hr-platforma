@@ -212,7 +212,7 @@ export default function ApplicationSection({
                   resetValidation()
                 }}
               />
-              <span>{extra.consent}</span>
+              <span>{audience === 'candidate' ? extra.consent : extra.employerConsent}</span>
             </label>
 
             {validationError && (
