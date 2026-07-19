@@ -12,6 +12,18 @@ function toDatabaseRecord(application) {
   }
 }
 
+async function readErrorDetail(response) {
+  const raw = await response.text()
+  if (!raw) return ''
+
+  try {
+    const payload = JSON.parse(raw)
+    return payload.message || payload.details || payload.hint || raw
+  } catch {
+    return raw
+  }
+}
+
 export async function submitSupabaseApplication(application) {
   if (!backendConfig.hasSupabase) {
     throw new Error('Supabase is not configured.')
@@ -29,15 +41,7 @@ export async function submitSupabaseApplication(application) {
   })
 
   if (!response.ok) {
-    let detail = ''
-
-    try {
-      const payload = await response.json()
-      detail = payload.message || payload.details || payload.hint || ''
-    } catch {
-      detail = await response.text()
-    }
-
+    const detail = await readErrorDetail(response)
     throw new Error(detail || `Supabase request failed with status ${response.status}.`)
   }
 
