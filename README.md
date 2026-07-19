@@ -14,7 +14,9 @@ IDEGLI üçin işgär saýlap-seçiş, Executive Search we karýera konsultasiý
 - PDF, DOC we DOCX CV saýlamak interfeýsi
 - CV görnüşi we 5 MB ölçeg çägi boýunça frontend barlagy
 - Şahsy maglumatlaryň işlenmegine razylyk barlagy
-- Iş berijiler üçin işgär sargyt formasy
+- Giňeldilen iş beriji işgär sargyt formasy
+- Kompaniýa, wezipe, işgär sany, tejribe, iş formaty, aýlyk we möhlet maglumatlary
+- Gizlin wakansiýa sargydy üçin aýratyn saýlaw
 - Düşnükli 4 tapgyrly recruitment prosesi
 - Accessibility we reduced-motion sazlamalary
 - GitHub Pages arkaly awtomatik ýerleşdiriş
@@ -47,11 +49,12 @@ npm run preview
 2. Kod gurluşyny aýratyn komponentlere bölmek
 3. Wakansiýalar katalogy, gözleg, filtrler we giňişleýin maglumat paneli
 4. Giňeldilen dalaşgär formasy we CV ýüklemek interfeýsi
+5. Giňeldilen iş beriji işgär sargyt formasy
 
 ## Indiki tapgyrlar
 
-1. Iş beriji formasyny giňeltmek
-2. IDEGLI-niň hakyky logo, reňk we kontakt maglumatlaryny ýerleşdirmek
+1. IDEGLI-niň hakyky logo, reňk we kontakt maglumatlaryny ýerleşdirmek
+2. “Biz barada” we kontakt bölümlerini kämilleşdirmek
 3. Backend we maglumat bazasyny birikdirmek
 4. CV faýllaryny hakyky bulut ammarynda saklamak
 5. Admin panel we kandidat statuslaryny dolandyrmak
@@ -61,4 +64,4 @@ npm run preview
 
 ## Bellik
 
-Häzirki wakansiýalar we arza formalary demo görnüşindedir. CV faýly frontendde saýlanýar we barlanýar, ýöne entek serwere ýüklenmeýär. Hakyky wakansiýa şertleri IDEGLI tarapyndan tassyklanandan soň demo maglumatlary çalşylar.
+Häzirki wakansiýalar we arza formalary demo görnüşindedir. CV faýly frontendde saýlanýar we barlanýar, ýöne entek serwere ýüklenmeýär. Iş berijiniň sargyt formasy hem maglumatlary entek serwere ibermeýär. Hakyky wakansiýa şertleri IDEGLI tarapyndan tassyklanandan soň demo maglumatlary çalşylar.
