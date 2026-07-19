@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react'
 import '../application.css'
 import '../backend.css'
+import { backendConfig } from '../config/backend.js'
 import { applicationCopy } from '../data/applicationContent.js'
 import ArrowIcon from './ArrowIcon.jsx'
 import EmployerRequestFields from './EmployerRequestFields.jsx'
+import TurnstileWidget from './TurnstileWidget.jsx'
 
 const MAX_CV_SIZE = 5 * 1024 * 1024
 const ALLOWED_CV_EXTENSIONS = ['pdf', 'doc', 'docx']
@@ -25,14 +27,24 @@ export default function ApplicationSection({
   const [validationError, setValidationError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submissionMode, setSubmissionMode] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const [turnstileError, setTurnstileError] = useState('')
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0)
   const fileInputRef = useRef(null)
   const extra = applicationCopy[lang]
   const usesSupabase = backendMode === 'supabase'
+  const hasTurnstile = backendConfig.hasTurnstile
 
   const resetValidation = () => {
     setSubmitted(false)
     setSubmissionMode('')
     setValidationError('')
+  }
+
+  const resetTurnstile = () => {
+    setTurnstileToken('')
+    setTurnstileError('')
+    setTurnstileResetKey((current) => current + 1)
   }
 
   const clearCv = () => {
@@ -44,6 +56,7 @@ export default function ApplicationSection({
   const changeAudience = (nextAudience) => {
     setAudience(nextAudience)
     resetValidation()
+    resetTurnstile()
     setConsent(false)
     if (nextAudience === 'employer') clearCv()
   }
@@ -94,6 +107,16 @@ export default function ApplicationSection({
       return
     }
 
+    if (usesSupabase && !hasTurnstile) {
+      setValidationError(extra.securityConfigError)
+      return
+    }
+
+    if (usesSupabase && !turnstileToken) {
+      setValidationError(turnstileError || extra.securityRequired)
+      return
+    }
+
     const form = event.currentTarget
     const formData = new FormData(form)
     formData.delete('cv')
@@ -109,6 +132,7 @@ export default function ApplicationSection({
       const result = await handleSubmit({
         audience,
         fields,
+        turnstileToken: usesSupabase ? turnstileToken : '',
         cvFile: audience === 'candidate' ? cvFile : null,
         cv: audience === 'candidate' && cvFile
           ? {
@@ -119,10 +143,16 @@ export default function ApplicationSection({
           : null,
       })
 
+      if (usesSupabase) resetTurnstile()
+
       if (!result?.ok) {
-        const errorMessage = result?.mode === 'supabase-error' && result?.backupSaved
-          ? extra.remoteError
-          : extra.storageError
+        let errorMessage = result?.error || extra.remoteError
+
+        if (result?.code === 'rate_limited') errorMessage = extra.rateLimited
+        if (result?.code === 'captcha_failed' || result?.code === 'captcha_required') errorMessage = extra.securityExpired
+        if (result?.mode === 'supabase-configuration-error') errorMessage = extra.securityConfigError
+        if (result?.mode === 'supabase-error' && result?.backupSaved && !result?.code) errorMessage = extra.remoteError
+
         setValidationError(errorMessage)
         return
       }
@@ -132,6 +162,7 @@ export default function ApplicationSection({
       setConsent(false)
       if (audience === 'candidate') clearCv()
     } catch {
+      if (usesSupabase) resetTurnstile()
       setValidationError(usesSupabase ? extra.remoteError : extra.storageError)
     } finally {
       setIsSubmitting(false)
@@ -281,6 +312,31 @@ export default function ApplicationSection({
               <span>{audience === 'candidate' ? extra.consent : extra.employerConsent}</span>
             </label>
 
+            {usesSupabase && hasTurnstile && (
+              <div className="turnstile-section">
+                <div className="turnstile-section-header">
+                  <strong>{extra.securityTitle}</strong>
+                  <small>{extra.securityHint}</small>
+                </div>
+                <TurnstileWidget
+                  siteKey={backendConfig.turnstileSiteKey}
+                  lang={lang}
+                  resetKey={turnstileResetKey}
+                  onToken={(token) => {
+                    setTurnstileToken(token)
+                    setTurnstileError('')
+                    if (token) setValidationError('')
+                  }}
+                  onError={() => setTurnstileError(extra.securityLoadError)}
+                />
+                {turnstileError && <p className="form-error-message" role="alert">{turnstileError}</p>}
+              </div>
+            )}
+
+            {usesSupabase && !hasTurnstile && (
+              <div className="turnstile-config-error" role="alert">{extra.securityConfigError}</div>
+            )}
+
             {validationError && (
               <div className="form-validation-summary" role="alert">
                 <strong>{extra.validationTitle}:</strong> {validationError}
@@ -289,7 +345,11 @@ export default function ApplicationSection({
           </div>
 
           <div className="form-submit-row">
-            <button className="button button-accent" type="submit" disabled={isSubmitting}>
+            <button
+              className="button button-accent"
+              type="submit"
+              disabled={isSubmitting || (usesSupabase && !hasTurnstile)}
+            >
               {isSubmitting
                 ? extra.submitting
                 : audience === 'candidate'
