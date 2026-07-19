@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import '../admin.css'
 import '../admin-remote.css'
+import ApplicationActivityPanel from './ApplicationActivityPanel.jsx'
 import {
   clearApplications,
   getApplications,
@@ -98,8 +99,21 @@ function getSecondaryTitle(application) {
 }
 
 export default function AdminDashboard({
-  lang, setLang, mode = 'local', applications: remoteApplications = [], remoteError = '', remoteBusy = false,
-  remoteUser = null, onRefresh, onStatusChange, onDelete, onCvDownload, onLogout,
+  lang,
+  setLang,
+  mode = 'local',
+  applications: remoteApplications = [],
+  activity = { notesByApplication: {}, eventsByApplication: {} },
+  remoteError = '',
+  remoteBusy = false,
+  remoteUser = null,
+  onRefresh,
+  onStatusChange,
+  onAddNote,
+  onDeleteNote,
+  onDelete,
+  onCvDownload,
+  onLogout,
 }) {
   const [localApplications, setLocalApplications] = useState(() => getApplications())
   const [audienceFilter, setAudienceFilter] = useState('all')
@@ -227,6 +241,17 @@ export default function AdminDashboard({
                     ) : application.cv ? <small>{t.cvLocalOnly}</small> : null}
                   </div>
                 </div>
+
+                {isRemote && (
+                  <ApplicationActivityPanel
+                    lang={lang}
+                    notes={activity.notesByApplication?.[application.id] || []}
+                    events={activity.eventsByApplication?.[application.id] || []}
+                    busy={remoteBusy}
+                    onAddNote={(body) => onAddNote?.(application.id, body)}
+                    onDeleteNote={onDeleteNote}
+                  />
+                )}
               </details>
             </article>
           )) : (
