@@ -18,6 +18,7 @@ export default function Footer({ t }) {
         <a href="#about">{t.nav[2]}</a>
         <a href="#process">{t.nav[3]}</a>
         <a href="#contact">{t.nav[4]}</a>
+        <a href="#/admin">{t.adminLink}</a>
       </div>
 
       <div className="footer-contact-links">
