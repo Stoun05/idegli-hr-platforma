@@ -1,6 +1,6 @@
 # IDEGLI Supabase sazlamasy
 
-Bu görkezme public arza formalaryny Supabase/PostgreSQL bazasyna ibermek, private CV Storage-i, HR audit taryhyny we goralan remote admin panelini sazlamak üçin niýetlenendir.
+Bu görkezme public arza formalaryny Supabase/PostgreSQL bazasyna ibermek, private CV Storage-i, HR audit taryhyny, Telegram/e-poçta habarnamalaryny we goralan remote admin panelini sazlamak üçin niýetlenendir.
 
 ## 1. Supabase proýektini döretmek
 
@@ -22,21 +22,19 @@ Supabase Dashboard → SQL Editor bölüminde şu tertipde işlediň:
 supabase/schema.sql
 supabase/storage.sql
 supabase/hr_activity.sql
+supabase/notifications.sql
 supabase/assign_admin_role.sql
 ```
 
-`schema.sql`:
+### `schema.sql`
 
 - `applications` tablisasyny döredýär;
 - kandidat we iş beriji görnüşlerini çäklendirýär;
 - `submitter_id` arkaly kandidat arzasyny anonymous Auth ulanyjysy bilen baglanyşdyrýar;
 - statuslaryň dogry sanawyny belleýär;
-- Row Level Security açýar;
-- iş beriji public sargydyna CV-siz INSERT rugsadyny berýär;
-- kandidat arzasyna diňe öz UUID bukjasyna ýüklenen CV metadata-sy bilen INSERT rugsadyny berýär;
-- diňe `admin` ýa-da `hr` roluna SELECT/UPDATE/DELETE rugsadyny berýär.
+- public INSERT we HR-admin RLS düzgünlerini döredýär.
 
-`storage.sql`:
+### `storage.sql`
 
 - `candidate-cvs` private bucket döredýär;
 - ölçegi 5 MB bilen çäklendirýär;
@@ -44,15 +42,22 @@ supabase/assign_admin_role.sql
 - anonymous kandidata diňe öz bukjasyna upload/read/delete rugsadyny berýär;
 - `admin` we `hr` roluna ähli CV-leri okamak we pozmak rugsadyny berýär.
 
-`hr_activity.sql`:
+### `hr_activity.sql`
 
 - içerki HR bellikleri üçin `application_notes` tablisasyny döredýär;
 - üýtgedilip bilinmeýän taryh üçin `application_events` tablisasyny döredýär;
-- arza döredilende, status üýtgände we bellik goşulanda database trigger arkaly audit ýazgysyny döredýär;
-- öňden bar bolan arzalar üçin başlangyç taryh ýazgysyny döredýär;
-- bellikleri we taryhy diňe `admin`/`hr` roluna açýar.
+- arza döredilende, status üýtgände we bellik goşulanda trigger arkaly audit ýazgysyny döredýär;
+- öňden bar bolan arzalar üçin başlangyç taryh ýazgysyny döredýär.
 
-`assign_admin_role.sql`:
+### `notifications.sql`
+
+- `notification_deliveries` tablisany döredýär;
+- Telegram/e-poçta synanyşyklaryny, statusyny we provider ID-sini saklaýar;
+- bir waka/kanal/alyjy kombinasiýasynyň gaýtalanmagynyň öňüni alýar;
+- delivery taryhyny diňe `admin`/`hr` roluna görkezýär;
+- server-side Edge Function-a service-role arkaly log ýazmaga mümkinçilik berýär.
+
+### `assign_admin_role.sql`
 
 - öň döredilen Supabase Auth ulanyjysyna `admin` ýa-da `hr` roluny `app_metadata` içinde berýär.
 
@@ -77,16 +82,14 @@ Publishable key public API çagyryşlarynda `apikey` header-de ulanylýar. Anony
 
 ## 5. GitHub Pages secret-lary
 
-Repository → Settings → Secrets and variables → Actions → New repository secret:
+Repository → Settings → Secrets and variables → Actions:
 
 ```text
 VITE_SUPABASE_URL
 VITE_SUPABASE_PUBLISHABLE_KEY
 ```
 
-Bahalary Supabase proýektinden alyň. Soň `main` branch-a täze commit edilende GitHub Pages Supabase režiminde build bolar.
-
-`VITE_ENABLE_LOCAL_ADMIN_MIRROR` hökmany secret däl. Test gerek bolsa Actions Variables bölüminde `true` goýup bolýar; production-da `false` saklaň.
+`VITE_ENABLE_LOCAL_ADMIN_MIRROR` test üçin Actions Variable bolup biler; production-da `false` saklaň.
 
 ## 6. Admin ulanyjysyny we roluny sazlamak
 
@@ -98,9 +101,9 @@ docs/ADMIN_AUTH_SETUP.md
 
 Gysgaça:
 
-1. Supabase Dashboard → Authentication → Users bölüminde admin ulanyjysyny dörediň.
-2. `supabase/assign_admin_role.sql` faýlyndaky e-poçtany we roly üýtgediň.
-3. SQL-ni Dashboard → SQL Editor bölüminde işlediň.
+1. Authentication → Users bölüminde admin ulanyjysyny dörediň.
+2. `supabase/assign_admin_role.sql` içindäki e-poçtany we roly üýtgediň.
+3. SQL-ni işlediň.
 4. Ulanyjy çykyp, täzeden giriş etsin.
 
 ## 7. CV Storage sazlamasy
@@ -118,7 +121,7 @@ Kandidat akymy:
 3. Storage ýoly `applications.cv_metadata` içine ýazylýar.
 4. Arza ýazgysy şowsuz bolsa, faýl yzyna pozulýar.
 5. HR/admin CV-ni private authenticated endpoint arkaly ýükläp alýar.
-6. Arza admin tarapyndan pozulsa, degişli CV hem pozulýar.
+6. Arza pozulsa, degişli CV hem pozulýar.
 
 ## 8. HR bellikleri we audit taryhy
 
@@ -130,33 +133,69 @@ docs/HR_ACTIVITY_SETUP.md
 
 Remote admin panelde:
 
-- her arza üçin içerki bellik ýazylýar;
+- içerki bellik ýazylýar;
 - belligiň awtory, roly we wagty saklanýar;
 - status üýtgeşmesi database trigger tarapyndan awtomatik ýazylýar;
-- taryh frontend tarapyndan üýtgedilip ýa-da galplaşdyrylyp bilinmeýär;
 - public ulanyjy bellikleri we taryhy okap bilmeýär.
 
-## 9. Režimler
+## 9. Telegram we e-poçta habarnamalary
+
+Doly görkezme:
+
+```text
+docs/NOTIFICATIONS_SETUP.md
+```
+
+Esasy akym:
+
+```text
+application_events INSERT
+        ↓
+Supabase Database Webhook
+        ↓
+notify-hr Edge Function
+        ↓
+Telegram Bot API + Resend Email API
+        ↓
+notification_deliveries audit log
+```
+
+Function secret-lary frontendden aýratyn Supabase Edge Function secrets bölüminde saklanýar.
+
+Edge Function deployment:
+
+```bash
+supabase functions deploy notify-hr --project-ref YOUR_PROJECT_REF
+```
+
+Manual GitHub workflow üçin:
+
+```text
+SUPABASE_ACCESS_TOKEN
+SUPABASE_PROJECT_ID
+```
+
+repository secrets gerek.
+
+## 10. Režimler
 
 ### Supabase sazlanmadyk bolsa
 
 - arza `localStorage`-da saklanýar;
 - `#/admin` demo panelinde görünýär;
-- başga enjamda görünmeýär;
-- CV-niň diňe ady, ölçegi we MIME metadata-sy saklanýar;
-- HR bellikleri we audit taryhy elýeterli däl;
-- login talap edilmeýär, sebäbi bu diňe lokal demo maglumatydyr.
+- CV-niň diňe metadata-sy saklanýar;
+- HR bellikleri, audit taryhy we habarnamalar elýeterli däl.
 
 ### Supabase sazlanan bolsa
 
-- iş beriji sargydy `applications` tablisasyna iberilýär;
-- kandidat CV private Storage-a ýüklenýär we arza bilen baglanyşdyrylýar;
-- açyk ulanyjy kandidat maglumatlaryny SELECT edip bilmeýär;
+- formalar `applications` tablisasyna iberilýär;
+- kandidat CV private Storage-a ýüklenýär;
 - `#/admin` Supabase Auth login sahypasyny açýar;
-- diňe `admin` ýa-da `hr` roly remote maglumatlary, CV-leri, bellikleri we taryhy görýär;
-- status üýtgetmek, bellik goşmak, CV almak we pozmak RLS arkaly barlanýar.
+- diňe `admin` ýa-da `hr` roly remote maglumatlary dolandyrýar;
+- status, bellik we notification delivery taryhy admin panelde görünýär;
+- täze waka Database Webhook arkaly Telegram/e-poçta iberişini başlaýar.
 
-## 10. Lokal admin mirror
+## 11. Lokal admin mirror
 
 Diňe test üçin:
 
@@ -164,18 +203,20 @@ Diňe test üçin:
 VITE_ENABLE_LOCAL_ADMIN_MIRROR=true
 ```
 
-Bu Supabase-a üstünlikli iberilen arzanyň nusgasyny şol brauzeriň localStorage bölümine hem ýazýar. Production-da `false` saklamak maslahat berilýär.
+Production-da `false` saklamak maslahat berilýär.
 
-## 11. Barlaýyş
+## 12. Barlaýyş
 
-1. Saýty açyň.
-2. Kandidat formasyny PDF, DOC ýa-da DOCX CV bilen dolduryň.
-3. Storage → `candidate-cvs` private bucket-de faýly barlaň.
-4. Table Editor → `applications` içinde `submitter_id` we `cv_metadata.storagePath` maglumatlaryny barlaň.
-5. Iş beriji formasyny dolduryp, CV metadata-synyň null bolandygyny barlaň.
-6. `#/admin` salgysynda admin hasaby bilen giriň.
-7. CV-ni ýükläp almagy we status üýtgetmegi barlaň.
-8. `application_events` tablisasynda status üýtgeşmesiniň peýda bolandygyny barlaň.
-9. HR belligi goşup, `application_notes` we timeline ýazgysyny barlaň.
-10. Arza pozulandan soň degişli bellikleriň, taryhyň we CV-niň cascade/cleanup arkaly ýok bolandygyny barlaň.
-11. Roly ýok ulanyjynyň remote maglumatlary, CV-leri, bellikleri we taryhy okap bilmeýändigini barlaň.
+1. SQL faýllaryny görkezilen tertipde işlediň.
+2. Frontend GitHub secret-laryny goşuň.
+3. Anonymous Sign-Ins açyň.
+4. Admin hasaby we `admin`/`hr` roly dörediň.
+5. Edge Function secret-laryny goşuň.
+6. `notify-hr` function-y deploy ediň.
+7. `application_events` INSERT Database Webhook dörediň.
+8. Kandidat formasyny CV bilen dolduryň.
+9. Storage, `applications`, `application_events` we `notification_deliveries` tablisalaryny barlaň.
+10. Telegram we e-poçta habarynyň gelendigini barlaň.
+11. Admin panelde CV, HR bellikleri, taryh we notification delivery statusyny barlaň.
+12. Statusy üýtgedip ikinji habarnamany barlaň.
+13. Roly ýok ulanyjynyň goralan maglumatlary okap bilmeýändigini barlaň.
