@@ -8,15 +8,19 @@ function authHeaders(accessToken, extra = {}) {
   }
 }
 
-async function parseFailure(response, fallback) {
+async function responseFailure(response, fallback) {
   const raw = await response.text()
-  if (!raw) return fallback
+  if (!raw) return { message: fallback, raw: '' }
 
   try {
     const payload = JSON.parse(raw)
-    return payload.message || payload.details || payload.hint || raw
+    return {
+      message: payload.message || payload.details || payload.hint || fallback,
+      code: payload.code || '',
+      raw,
+    }
   } catch {
-    return raw
+    return { message: raw || fallback, raw }
   }
 }
 
@@ -57,8 +61,38 @@ function normalizeEvent(row) {
   }
 }
 
+function normalizeDelivery(row) {
+  return {
+    id: row.id,
+    eventId: row.event_id,
+    applicationId: row.application_id,
+    eventType: row.event_type,
+    channel: row.channel,
+    recipient: row.recipient,
+    status: row.status,
+    attempts: row.attempts,
+    providerMessageId: row.provider_message_id || '',
+    errorMessage: row.error_message || '',
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    sentAt: row.sent_at,
+  }
+}
+
+async function optionalNotificationRows(response) {
+  if (response.ok) return response.json()
+
+  const failure = await responseFailure(response, 'Notification deliveries could not be loaded.')
+  const tableMissing = failure.code === '42P01'
+    || failure.code === 'PGRST205'
+    || failure.raw.includes('notification_deliveries') && failure.raw.includes('does not exist')
+
+  if (tableMissing) return []
+  throw new Error(failure.message)
+}
+
 export async function fetchApplicationActivity(accessToken) {
-  const [notesResponse, eventsResponse] = await Promise.all([
+  const [notesResponse, eventsResponse, deliveriesResponse] = await Promise.all([
     fetch(
       `${backendConfig.supabaseUrl}/rest/v1/application_notes?select=*&order=created_at.desc&limit=2000`,
       { headers: authHeaders(accessToken) },
@@ -67,21 +101,32 @@ export async function fetchApplicationActivity(accessToken) {
       `${backendConfig.supabaseUrl}/rest/v1/application_events?select=*&order=created_at.desc&limit=5000`,
       { headers: authHeaders(accessToken) },
     ),
+    fetch(
+      `${backendConfig.supabaseUrl}/rest/v1/notification_deliveries?select=*&order=created_at.desc&limit=5000`,
+      { headers: authHeaders(accessToken) },
+    ),
   ])
 
   if (!notesResponse.ok) {
-    throw new Error(await parseFailure(notesResponse, 'HR notes could not be loaded.'))
+    const failure = await responseFailure(notesResponse, 'HR notes could not be loaded.')
+    throw new Error(failure.message)
   }
 
   if (!eventsResponse.ok) {
-    throw new Error(await parseFailure(eventsResponse, 'Application history could not be loaded.'))
+    const failure = await responseFailure(eventsResponse, 'Application history could not be loaded.')
+    throw new Error(failure.message)
   }
 
-  const [notes, events] = await Promise.all([notesResponse.json(), eventsResponse.json()])
+  const [notes, events, deliveries] = await Promise.all([
+    notesResponse.json(),
+    eventsResponse.json(),
+    optionalNotificationRows(deliveriesResponse),
+  ])
 
   return {
     notesByApplication: groupByApplication(notes, normalizeNote),
     eventsByApplication: groupByApplication(events, normalizeEvent),
+    deliveriesByApplication: groupByApplication(deliveries, normalizeDelivery),
   }
 }
 
@@ -96,7 +141,8 @@ export async function createApplicationNote(accessToken, applicationId, body) {
   })
 
   if (!response.ok) {
-    throw new Error(await parseFailure(response, 'HR note could not be saved.'))
+    const failure = await responseFailure(response, 'HR note could not be saved.')
+    throw new Error(failure.message)
   }
 
   const rows = await response.json()
@@ -113,6 +159,7 @@ export async function deleteApplicationNote(accessToken, noteId) {
   )
 
   if (!response.ok) {
-    throw new Error(await parseFailure(response, 'HR note could not be deleted.'))
+    const failure = await responseFailure(response, 'HR note could not be deleted.')
+    throw new Error(failure.message)
   }
 }
