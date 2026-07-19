@@ -12,16 +12,24 @@ create table if not exists public.applications (
   locale text not null default 'tm' check (locale in ('tm', 'ru')),
   fields jsonb not null default '{}'::jsonb,
   cv_metadata jsonb,
+  submitter_id uuid,
   consent boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.applications
+  add column if not exists submitter_id uuid;
 
 create index if not exists applications_created_at_idx
   on public.applications (created_at desc);
 
 create index if not exists applications_audience_status_idx
   on public.applications (audience, status);
+
+create index if not exists applications_submitter_idx
+  on public.applications (submitter_id)
+  where submitter_id is not null;
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -53,9 +61,24 @@ for insert
 to anon, authenticated
 with check (
   consent = true
-  and audience in ('candidate', 'employer')
   and status = 'new'
   and jsonb_typeof(fields) = 'object'
+  and (
+    (
+      audience = 'employer'
+      and submitter_id is null
+      and cv_metadata is null
+    )
+    or
+    (
+      audience = 'candidate'
+      and (select auth.uid()) is not null
+      and submitter_id = (select auth.uid())
+      and cv_metadata is not null
+      and cv_metadata ->> 'bucket' = 'candidate-cvs'
+      and cv_metadata ->> 'storagePath' like ('anonymous/' || (select auth.uid())::text || '/%')
+    )
+  )
 );
 
 drop policy if exists "HR admins can read applications" on public.applications;
@@ -95,6 +118,9 @@ comment on column public.applications.fields is
   'Flexible form payload. Personal data is protected by row level security.';
 
 comment on column public.applications.cv_metadata is
-  'CV filename, size, MIME type and future storage path. The file itself is stored separately.';
+  'Private Storage bucket, path, filename, size and MIME type for the candidate CV.';
+
+comment on column public.applications.submitter_id is
+  'Anonymous Supabase Auth user that uploaded the candidate CV. Employer requests can remain null.';
 
 commit;
