@@ -1,6 +1,14 @@
 import ArrowIcon from './ArrowIcon.jsx'
 
-export default function ApplicationSection({ t, audience, setAudience, submitted, setSubmitted, handleSubmit }) {
+export default function ApplicationSection({
+  t,
+  audience,
+  setAudience,
+  submitted,
+  setSubmitted,
+  selectedRole,
+  handleSubmit,
+}) {
   return (
     <section className="section form-section" id="apply">
       <div className="form-intro">
@@ -47,7 +55,16 @@ export default function ApplicationSection({ t, audience, setAudience, submitted
             </label>
             <label>
               <span>{audience === 'candidate' ? t.fields.role : t.fields.company}</span>
-              <input required name={audience === 'candidate' ? 'role' : 'company'} />
+              {audience === 'candidate' ? (
+                <input
+                  key={selectedRole || 'candidate-role'}
+                  required
+                  name="role"
+                  defaultValue={selectedRole}
+                />
+              ) : (
+                <input required name="company" />
+              )}
             </label>
             <label>
               <span>{audience === 'candidate' ? t.fields.experience : t.fields.vacancy}</span>
