@@ -1,0 +1,99 @@
+.activity-notification-column {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid rgba(23, 35, 30, 0.11);
+  border-radius: 18px;
+  background: #f8f7f2;
+}
+
+.activity-delivery-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.activity-delivery {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(23, 35, 30, 0.1);
+  border-left-width: 4px;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.activity-delivery.delivery-sent {
+  border-left-color: #3f765f;
+}
+
+.activity-delivery.delivery-failed {
+  border-left-color: #a24238;
+}
+
+.activity-delivery.delivery-processing {
+  border-left-color: #d29a3f;
+}
+
+.activity-delivery.delivery-skipped {
+  border-left-color: #909894;
+}
+
+.activity-delivery > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.activity-delivery strong {
+  font-size: 0.72rem;
+}
+
+.delivery-channel {
+  display: inline-flex;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 0.61rem;
+  font-weight: 820;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.delivery-channel.channel-telegram {
+  color: #fff;
+  background: #2a75a7;
+}
+
+.delivery-channel.channel-email {
+  color: #fff;
+  background: #59497d;
+}
+
+.activity-delivery > p {
+  margin: 10px 0 0;
+  color: #7a837e;
+  font-size: 0.62rem;
+  line-height: 1.45;
+}
+
+.activity-delivery > small {
+  display: block;
+  overflow: hidden;
+  margin-top: 8px;
+  color: #8c3028;
+  font-size: 0.62rem;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .activity-notification-column {
+    padding: 15px;
+  }
+
+  .activity-delivery-list {
+    grid-template-columns: 1fr;
+  }
+}
