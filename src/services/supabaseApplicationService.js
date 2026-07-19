@@ -33,7 +33,6 @@ export async function submitSupabaseApplication(application) {
     method: 'POST',
     headers: {
       apikey: backendConfig.supabasePublishableKey,
-      Authorization: `Bearer ${backendConfig.supabasePublishableKey}`,
       'Content-Type': 'application/json',
       Prefer: 'return=minimal',
     },
