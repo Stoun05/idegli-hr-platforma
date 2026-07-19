@@ -10,11 +10,8 @@ import {
 
 const adminCopy = {
   tm: {
-    title: 'IDEGLI admin paneli',
-    subtitleLocal: 'Kandidat arzalary we iş beriji sargytlary üçin brauzer demo dolandyryşy.',
-    subtitleRemote: 'Supabase bazasyndaky kandidat arzalary we iş beriji sargytlary.',
-    demo: 'Diňe demo',
-    live: 'Goralan remote baza',
+    title: 'IDEGLI admin paneli', subtitleLocal: 'Kandidat arzalary we iş beriji sargytlary üçin brauzer demo dolandyryşy.',
+    subtitleRemote: 'Supabase bazasyndaky kandidat arzalary we iş beriji sargytlary.', demo: 'Diňe demo', live: 'Goralan remote baza',
     warningLocal: 'Maglumatlar diňe şu brauzeriň localStorage bölüminde saklanýar we başga enjamda görünmeýär.',
     warningRemote: 'Maglumatlar Supabase/PostgreSQL bazasyndan gelýär. Giriş admin ýa-da HR roly we RLS arkaly goralýar.',
     back: 'Saýta dolanmak', language: 'RU', all: 'Ählisi', candidates: 'Kandidatlar', employers: 'Iş berijiler', newItems: 'Täze',
@@ -22,14 +19,13 @@ const adminCopy = {
     clear: 'Hemmesini arassalamak', refresh: 'Täzelemek', logout: 'Çykmak', loading: 'Ýüklenýär...',
     emptyTitle: 'Arza tapylmady', emptyTextLocal: 'Saýtdaky dalaşgär ýa-da iş beriji formasyny dolduryň. Arza şu ýerde peýda bolar.',
     emptyTextRemote: 'Remote maglumat bazasynda şu filtre laýyk arza ýok.', candidate: 'Kandidat', employer: 'Iş beriji', created: 'Döredilen wagty',
-    cv: 'CV metadata', cvMissing: 'CV ýok', details: 'Ähli maglumatlar', delete: 'Pozmak', confirmDelete: 'Bu ýazgyny pozmalymy?',
-    confirmClear: 'Şu brauzerde saklanan ähli demo arzalary pozmalymy?', localOnly: 'Lokal maglumat', secureData: 'Goralan maglumat',
+    cv: 'CV maglumatlary', cvMissing: 'CV ýok', cvDownload: 'CV-ni ýüklemek', cvLocalOnly: 'Diňe metadata', details: 'Ähli maglumatlar',
+    delete: 'Pozmak', confirmDelete: 'Bu ýazgyny pozmalymy?', confirmClear: 'Şu brauzerde saklanan ähli demo arzalary pozmalymy?',
+    localOnly: 'Lokal maglumat', secureData: 'Goralan maglumat',
   },
   ru: {
-    title: 'Админ-панель IDEGLI',
-    subtitleLocal: 'Демо-управление откликами кандидатов и заявками работодателей.',
-    subtitleRemote: 'Отклики кандидатов и заявки работодателей из базы Supabase.',
-    demo: 'Только демо', live: 'Защищённая удалённая база',
+    title: 'Админ-панель IDEGLI', subtitleLocal: 'Демо-управление откликами кандидатов и заявками работодателей.',
+    subtitleRemote: 'Отклики кандидатов и заявки работодателей из базы Supabase.', demo: 'Только демо', live: 'Защищённая удалённая база',
     warningLocal: 'Данные хранятся только в localStorage этого браузера и не видны на других устройствах.',
     warningRemote: 'Данные загружаются из Supabase/PostgreSQL. Доступ защищён ролью admin или hr и политиками RLS.',
     back: 'Вернуться на сайт', language: 'TM', all: 'Все', candidates: 'Кандидаты', employers: 'Работодатели', newItems: 'Новые',
@@ -37,8 +33,8 @@ const adminCopy = {
     clear: 'Очистить всё', refresh: 'Обновить', logout: 'Выйти', loading: 'Загрузка...', emptyTitle: 'Заявок пока нет',
     emptyTextLocal: 'Заполните форму кандидата или работодателя на сайте. Заявка появится здесь.',
     emptyTextRemote: 'В удалённой базе нет заявок, соответствующих выбранным фильтрам.', candidate: 'Кандидат', employer: 'Работодатель',
-    created: 'Создано', cv: 'Метаданные CV', cvMissing: 'CV отсутствует', details: 'Все данные', delete: 'Удалить',
-    confirmDelete: 'Удалить эту запись?', confirmClear: 'Удалить все демозаявки, сохранённые в этом браузере?',
+    created: 'Создано', cv: 'Данные CV', cvMissing: 'CV отсутствует', cvDownload: 'Скачать CV', cvLocalOnly: 'Только метаданные', details: 'Все данные',
+    delete: 'Удалить', confirmDelete: 'Удалить эту запись?', confirmClear: 'Удалить все демозаявки, сохранённые в этом браузере?',
     localOnly: 'Локальные данные', secureData: 'Защищённые данные',
   },
 }
@@ -50,10 +46,20 @@ const statusOptions = {
 
 const fieldLabels = {
   tm: {
-    name: 'Ady we familiýasy', phone: 'Telefon', email: 'E-poçta', city: 'Şäher', role: 'Isleýän wezipesi', experience: 'Tejribe', languages: 'Diller', salary: 'Garaşýan aýlygy', message: 'Goşmaça maglumat', company: 'Kompaniýa', industry: 'Iş ugry', contactRole: 'Jogapkär adamyň wezipesi', website: 'Web-saýt', vacancy: 'Açyk wezipe', headcount: 'Işgär sany', location: 'Ýerleşýän ýeri', workType: 'Iş görnüşi', requiredExperience: 'Talap edilýän tejribe', employmentType: 'Işe alyş görnüşi', salaryFrom: 'Aýlykdan', salaryTo: 'Aýlyga çenli', startDate: 'Başlama senesi', deadline: 'Soňky möhlet', responsibilities: 'Borçlar', requirements: 'Talaplar', offer: 'Hödürlenýän şertler', confidential: 'Gizlin wakansiýa',
+    name: 'Ady we familiýasy', phone: 'Telefon', email: 'E-poçta', city: 'Şäher', role: 'Isleýän wezipesi', experience: 'Tejribe',
+    languages: 'Diller', salary: 'Garaşýan aýlygy', message: 'Goşmaça maglumat', company: 'Kompaniýa', industry: 'Iş ugry',
+    contactRole: 'Jogapkär adamyň wezipesi', website: 'Web-saýt', vacancy: 'Açyk wezipe', headcount: 'Işgär sany',
+    location: 'Ýerleşýän ýeri', workType: 'Iş görnüşi', requiredExperience: 'Talap edilýän tejribe', employmentType: 'Işe alyş görnüşi',
+    salaryFrom: 'Aýlykdan', salaryTo: 'Aýlyga çenli', startDate: 'Başlama senesi', deadline: 'Soňky möhlet', responsibilities: 'Borçlar',
+    requirements: 'Talaplar', offer: 'Hödürlenýän şertler', confidential: 'Gizlin wakansiýa',
   },
   ru: {
-    name: 'Имя и фамилия', phone: 'Телефон', email: 'Email', city: 'Город', role: 'Желаемая должность', experience: 'Опыт', languages: 'Языки', salary: 'Ожидаемая зарплата', message: 'Дополнительно', company: 'Компания', industry: 'Отрасль', contactRole: 'Должность контактного лица', website: 'Сайт', vacancy: 'Вакансия', headcount: 'Количество сотрудников', location: 'Локация', workType: 'Формат работы', requiredExperience: 'Требуемый опыт', employmentType: 'Тип занятости', salaryFrom: 'Зарплата от', salaryTo: 'Зарплата до', startDate: 'Дата выхода', deadline: 'Дедлайн', responsibilities: 'Задачи', requirements: 'Требования', offer: 'Условия', confidential: 'Конфиденциальная вакансия',
+    name: 'Имя и фамилия', phone: 'Телефон', email: 'Email', city: 'Город', role: 'Желаемая должность', experience: 'Опыт',
+    languages: 'Языки', salary: 'Ожидаемая зарплата', message: 'Дополнительно', company: 'Компания', industry: 'Отрасль',
+    contactRole: 'Должность контактного лица', website: 'Сайт', vacancy: 'Вакансия', headcount: 'Количество сотрудников',
+    location: 'Локация', workType: 'Формат работы', requiredExperience: 'Требуемый опыт', employmentType: 'Тип занятости',
+    salaryFrom: 'Зарплата от', salaryTo: 'Зарплата до', startDate: 'Дата выхода', deadline: 'Дедлайн', responsibilities: 'Задачи',
+    requirements: 'Требования', offer: 'Условия', confidential: 'Конфиденциальная вакансия',
   },
 }
 
@@ -63,13 +69,12 @@ function escapeCsv(value) {
 }
 
 function downloadCsv(applications) {
-  const columns = ['id', 'audience', 'status', 'createdAt', 'name', 'phone', 'email', 'company', 'role', 'vacancy', 'city', 'experience', 'languages', 'salary', 'industry', 'location', 'workType', 'headcount', 'confidential', 'cvName']
+  const columns = ['id', 'audience', 'status', 'createdAt', 'name', 'phone', 'email', 'company', 'role', 'vacancy', 'city', 'experience', 'languages', 'salary', 'industry', 'location', 'workType', 'headcount', 'confidential', 'cvName', 'cvStoragePath']
   const rows = applications.map((application) => {
-    const data = { id: application.id, audience: application.audience, status: application.status, createdAt: application.createdAt, ...application.fields, cvName: application.cv?.name || '' }
+    const data = { id: application.id, audience: application.audience, status: application.status, createdAt: application.createdAt, ...application.fields, cvName: application.cv?.name || '', cvStoragePath: application.cv?.storagePath || '' }
     return columns.map((column) => escapeCsv(data[column])).join(',')
   })
-  const csv = `\uFEFF${columns.join(',')}\n${rows.join('\n')}`
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+  const blob = new Blob([`\uFEFF${columns.join(',')}\n${rows.join('\n')}`], { type: 'text/csv;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
@@ -93,17 +98,8 @@ function getSecondaryTitle(application) {
 }
 
 export default function AdminDashboard({
-  lang,
-  setLang,
-  mode = 'local',
-  applications: remoteApplications = [],
-  remoteError = '',
-  remoteBusy = false,
-  remoteUser = null,
-  onRefresh,
-  onStatusChange,
-  onDelete,
-  onLogout,
+  lang, setLang, mode = 'local', applications: remoteApplications = [], remoteError = '', remoteBusy = false,
+  remoteUser = null, onRefresh, onStatusChange, onDelete, onCvDownload, onLogout,
 }) {
   const [localApplications, setLocalApplications] = useState(() => getApplications())
   const [audienceFilter, setAudienceFilter] = useState('all')
@@ -223,7 +219,13 @@ export default function AdminDashboard({
                   {Object.entries(application.fields || {}).map(([key, value]) => value !== '' && value != null ? (
                     <div key={key}><span>{fieldLabels[lang][key] || key}</span><strong>{typeof value === 'boolean' ? (value ? '✓' : '—') : String(value)}</strong></div>
                   ) : null)}
-                  <div><span>{t.cv}</span><strong>{application.cv ? `${application.cv.name} · ${(application.cv.size / 1024 / 1024).toFixed(2)} MB` : t.cvMissing}</strong></div>
+                  <div className="record-cv-cell">
+                    <span>{t.cv}</span>
+                    <strong>{application.cv ? `${application.cv.name} · ${(application.cv.size / 1024 / 1024).toFixed(2)} MB` : t.cvMissing}</strong>
+                    {application.cv?.storagePath && isRemote ? (
+                      <button type="button" disabled={remoteBusy} onClick={() => onCvDownload?.(application.cv)}>{t.cvDownload}</button>
+                    ) : application.cv ? <small>{t.cvLocalOnly}</small> : null}
+                  </div>
                 </div>
               </details>
             </article>
