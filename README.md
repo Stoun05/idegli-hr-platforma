@@ -24,19 +24,17 @@ IDEGLI üçin işgär saýlap-seçiş, Executive Search we karýera konsultasiý
 - Giňeldilen iş beriji işgär sargyt formasy
 - Kompaniýa, wezipe, işgär sany, tejribe, iş formaty, aýlyk we möhlet maglumatlary
 - Gizlin wakansiýa sargydy üçin aýratyn saýlaw
-- Checkbox we razylyk bloklarynyň responsive layout düzedişi
-- IDEGLI barada professional tanyşdyryş bölümi
-- Maksatly gözleg, gizlinlik we netijä çenli goldaw ýörelgeleri
-- Telefon, e-poçta we Aşgabat maglumatlary bilen kontakt bölümi
-- Arzalary şol brauzeriň localStorage bölüminde saklaýan demo maglumat gatlagy
-- Kandidat we iş beriji ýazgylaryny görkezýän demo admin paneli
-- Admin panelde gözleg, görnüş/status filtri we status üýtgetmek
-- Ýazgylary pozmak, hemmesini arassalamak we CSV çykarmak
-- Supabase/PostgreSQL üçin şertli production maglumat gatlagy
-- Supabase sazlanmasa localStorage-a awtomatik fallback
+- IDEGLI barada professional tanyşdyryş we kontakt bölümleri
+- LocalStorage demo maglumat gatlagy we demo admin paneli
+- Supabase/PostgreSQL production maglumat gatlagy
 - Public INSERT we diňe HR rollary üçin SELECT/UPDATE/DELETE RLS syýasatlary
+- Supabase Auth email/parol giriş sahypasy
+- `admin` we `hr` rollary boýunça frontend we database awtorizasiýasy
+- JWT sessiýasynyň brauzerde saklanyşy we möhleti gutaranda refresh akymy
+- Remote admin panelde maglumatlary görmek, gözlemek, filtrlemek, status üýtgetmek we pozmak
+- CSV eksporty we remote maglumatlary täzeden ýüklemek
+- Supabase sazlanmasa localStorage-a awtomatik fallback
 - GitHub Pages build wagty Supabase secret-laryny kabul edýän workflow
-- Düşnükli 4 tapgyrly recruitment prosesi
 - Accessibility we reduced-motion sazlamalary
 - GitHub Pages arkaly awtomatik ýerleşdiriş
 
@@ -46,22 +44,20 @@ IDEGLI üçin işgär saýlap-seçiş, Executive Search we karýera konsultasiý
 https://stoun05.github.io/idegli-hr-platforma/
 ```
 
-## Demo admin paneli
+## Admin paneli
 
 ```text
 https://stoun05.github.io/idegli-hr-platforma/#/admin
 ```
 
-Saýtyň footer bölümindäki `Admin demo` salgylanmasy hem şol panela geçirýär.
+Supabase sazlanmadyk bolsa bu salgy localStorage demo panelini açýar.
 
-### Demo admin çäklendirmeleri
+Supabase sazlanan bolsa:
 
-- maglumatlar diňe arza doldurylan brauzerde saklanýar;
-- başga enjamda ýa-da başga brauzerde görünmeýär;
-- brauzer maglumatlary arassalansa arzalar pozulýar;
-- CV faýlynyň özi saklanmaýar, diňe faýlyň ady, görnüşi we ölçegi saklanýar;
-- admin panelde entek giriş/parol goragy ýok;
-- Supabase remote ýazgylary häzirki demo admin panelinde görkezilmeýär.
+- Supabase Auth login sahypasy açylýar;
+- diňe `admin` ýa-da `hr` roly bolan ulanyjy kabul edilýär;
+- arzalar remote PostgreSQL bazasyndan ýüklenýär;
+- maglumatlara giriş RLS bilen täzeden barlanýar.
 
 ## Backend režimleri
 
@@ -71,7 +67,8 @@ Supabase environment maglumatlary ýok bolsa:
 
 - forma maglumatlary localStorage-a ýazylýar;
 - ýazgy şol brauzeriň `#/admin` panelinde görünýär;
-- serwer ýa-da maglumat bazasy gerek däl.
+- başga enjamda görünmeýär;
+- brauzer maglumatlary arassalansa ýazgylar pozulýar.
 
 ### 2. Supabase režimi
 
@@ -83,21 +80,31 @@ VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
 VITE_ENABLE_LOCAL_ADMIN_MIRROR=false
 ```
 
-forma maglumatlary Supabase REST Data API arkaly PostgreSQL-daky `applications` tablisasyna iberilýär.
+- public formalar Supabase REST Data API arkaly `applications` tablisasyna ýazýar;
+- publishable key diňe `apikey` header-de ulanylýar;
+- login eden adminiň JWT-si `Authorization` header-de iberilýär;
+- açyk ulanyjy kandidat maglumatlaryny SELECT edip bilmeýär.
 
-Doly sazlama görkezmesi:
+Doly backend sazlamasy:
 
 ```text
 docs/SUPABASE_SETUP.md
 ```
 
-Maglumat bazasynyň SQL gurluşy:
+Admin giriş we rol sazlamasy:
+
+```text
+docs/ADMIN_AUTH_SETUP.md
+```
+
+SQL faýllary:
 
 ```text
 supabase/schema.sql
+supabase/assign_admin_role.sql
 ```
 
-> `service_role` açaryny hiç wagt frontend, GitHub Pages ýa-da `VITE_*` environment üýtgeýjisine goýmaň.
+> `service_role` ýa-da secret key-ni hiç wagt frontend, GitHub Pages ýa-da `VITE_*` environment üýtgeýjisine goýmaň.
 
 ## Lokal işletmek
 
@@ -132,6 +139,7 @@ Her `main` commit-den soň build we GitHub Pages deployment awtomatik işleýär
 - Vite
 - Arassa CSS
 - Browser localStorage
+- Supabase Auth
 - Supabase REST Data API
 - PostgreSQL
 - Row Level Security
@@ -149,10 +157,12 @@ src/
 └── *.css
 
 docs/
-└── SUPABASE_SETUP.md
+├── SUPABASE_SETUP.md
+└── ADMIN_AUTH_SETUP.md
 
 supabase/
-└── schema.sql
+├── schema.sql
+└── assign_admin_role.sql
 ```
 
 ## Tamamlanan tapgyrlar
@@ -165,18 +175,17 @@ supabase/
 6. Checkbox layout düzedişi, “Biz barada” we professional kontakt bölümleri
 7. Brauzer demo maglumat gatlagy we HR admin paneli
 8. Supabase/PostgreSQL schema, RLS we şertli remote arza iberişi
+9. Supabase Auth, `admin`/`hr` rollary we goralan remote admin paneli
 
 ## Indiki tapgyrlar
 
-1. Supabase Auth bilen admin girişini goşmak
-2. `admin` we `hr` rollary bilen remote admin paneli
-3. CV faýllaryny private Supabase Storage bucket-de saklamak
-4. Admin panelde HR bellikleri we kandidat taryhy
-5. Telegram/email habarnamalary
-6. Iş beriji we dalaşgär şahsy kabinetleri
-7. IDEGLI-niň hakyky logo we resmi brend reňkleri
-8. SEO, analitika we hakyky domen
+1. CV faýllaryny private Supabase Storage bucket-de saklamak
+2. Admin panelde HR bellikleri we kandidat taryhy
+3. Telegram/email habarnamalary
+4. Iş beriji we dalaşgär şahsy kabinetleri
+5. IDEGLI-niň hakyky logo we resmi brend reňkleri
+6. SEO, analitika we hakyky domen
 
 ## Bellik
 
-Häzirki wakansiýalar demo maglumatlarydyr. Supabase sazlanmadyk ýagdaýynda formalaryň maglumatlary diňe şol brauzeriň localStorage bölümine ýazylýar. Production ulanylyşy üçin Supabase schema, environment secret-lary, admin autentifikasiýasy, private CV Storage we maglumat goragy doly sazlanmalydyr.
+Häzirki wakansiýalar demo maglumatlarydyr. Supabase açarlary GitHub Actions secret-laryna goşulýança live saýt local demo režiminde işleýär. Production üçin Supabase schema, publishable key, admin Auth ulanyjysy, `admin`/`hr` roly we private CV Storage doly sazlanmalydyr.
