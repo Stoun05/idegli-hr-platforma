@@ -109,6 +109,7 @@ export default function ApplicationSection({
       const result = await handleSubmit({
         audience,
         fields,
+        cvFile: audience === 'candidate' ? cvFile : null,
         cv: audience === 'candidate' && cvFile
           ? {
               name: cvFile.name,
