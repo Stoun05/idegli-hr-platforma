@@ -14,11 +14,13 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [audience, setAudience] = useState('candidate')
   const [submitted, setSubmitted] = useState(false)
+  const [selectedRole, setSelectedRole] = useState('')
   const t = useMemo(() => copy[lang], [lang])
 
-  const scrollToForm = (nextAudience) => {
+  const scrollToForm = (nextAudience, role = '') => {
     setAudience(nextAudience)
     setSubmitted(false)
+    setSelectedRole(nextAudience === 'candidate' ? role : '')
     document.getElementById('apply')?.scrollIntoView({ behavior: 'smooth' })
   }
 
@@ -49,6 +51,7 @@ function App() {
           setAudience={setAudience}
           submitted={submitted}
           setSubmitted={setSubmitted}
+          selectedRole={selectedRole}
           handleSubmit={handleSubmit}
         />
         <FinalCta t={t} scrollToForm={scrollToForm} />
