@@ -1,0 +1,26 @@
+.site-footer {
+  grid-template-columns: minmax(260px, 1.15fr) minmax(180px, 0.7fr) minmax(220px, 0.8fr);
+}
+
+@media (max-width: 900px) {
+  .site-footer {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .footer-contact-links {
+    grid-column: 1 / -1;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+}
+
+@media (max-width: 760px) {
+  .site-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-contact-links,
+  .footer-bottom {
+    grid-column: 1;
+  }
+}
