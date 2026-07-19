@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import '../admin-activity.css'
+import '../admin-notifications.css'
 
 const copy = {
   tm: {
