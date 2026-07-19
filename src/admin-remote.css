@@ -29,9 +29,33 @@
 }
 
 .record-status-control select:disabled,
-.record-status-control button:disabled {
+.record-status-control button:disabled,
+.record-cv-cell button:disabled {
   cursor: wait;
   opacity: 0.55;
+}
+
+.record-cv-cell button {
+  width: fit-content;
+  min-height: 36px;
+  margin-top: 4px;
+  padding: 0 12px;
+  border: 1px solid rgba(23, 35, 30, 0.16);
+  border-radius: 999px;
+  color: #fff;
+  background: #315448;
+  font-size: 0.68rem;
+  font-weight: 780;
+}
+
+.record-cv-cell button:hover:not(:disabled) {
+  color: #13231d;
+  background: #d8ff63;
+}
+
+.record-cv-cell small {
+  color: #7a837e;
+  font-size: 0.65rem;
 }
 
 @media (max-width: 900px) {
