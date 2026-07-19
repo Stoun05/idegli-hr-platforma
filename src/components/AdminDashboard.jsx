@@ -103,7 +103,7 @@ export default function AdminDashboard({
   setLang,
   mode = 'local',
   applications: remoteApplications = [],
-  activity = { notesByApplication: {}, eventsByApplication: {} },
+  activity = { notesByApplication: {}, eventsByApplication: {}, deliveriesByApplication: {} },
   remoteError = '',
   remoteBusy = false,
   remoteUser = null,
@@ -247,6 +247,7 @@ export default function AdminDashboard({
                     lang={lang}
                     notes={activity.notesByApplication?.[application.id] || []}
                     events={activity.eventsByApplication?.[application.id] || []}
+                    deliveries={activity.deliveriesByApplication?.[application.id] || []}
                     busy={remoteBusy}
                     onAddNote={(body) => onAddNote?.(application.id, body)}
                     onDeleteNote={onDeleteNote}
