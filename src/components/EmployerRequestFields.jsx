@@ -1,11 +1,6 @@
 export default function EmployerRequestFields({ t, extra, resetValidation }) {
   return (
     <>
-      <div className="form-section-label wide-field">
-        <span>01</span>
-        <strong>{extra.employerCompanySection}</strong>
-      </div>
-
       <label>
         <span>{t.fields.company}</span>
         <input required name="company" autoComplete="organization" onChange={resetValidation} />
