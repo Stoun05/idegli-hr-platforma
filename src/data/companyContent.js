@@ -8,11 +8,11 @@ export const contactInfo = {
 export const companyCopy = {
   tm: {
     nav: ['Hyzmatlar', 'Wakansiýalar', 'Biz barada', 'Iş tertibi', 'Habarlaşmak'],
-    candidateText: 'Maglumatlaryňyz şu brauzerde demo görnüşinde saklanar we admin panelde görkeziler. CV faýlynyň diňe ady hem-de ölçegi saklanýar.',
-    employerText: 'Işgär sargydyňyz şu brauzerde demo görnüşinde saklanar we admin panelde dolandyrylar.',
-    submitted: 'Sag boluň! Arza şu brauzerdäki demo admin panelinde saklandy.',
-    privacy: 'Demo režimi: maglumatlar diňe şu brauzeriň localStorage bölüminde saklanýar.',
-    adminLink: 'Admin demo',
+    candidateText: 'Esasy maglumatlaryňyzy we CV faýlyňyzy dolduryň. Saýt işjeň backend režimine görä arzany howpsuz baza ýa-da lokal demo ammaryna iberer.',
+    employerText: 'Kompaniýaňyz we açyk wezipe barada maglumat goýuň. Maglumatlaryň nirede saklanýandygy formanyň içinde görkezilýär.',
+    submitted: 'Sag boluň! Arza kabul edildi.',
+    privacy: 'Ibermek bilen maglumatlaryň IDEGLI tarapyndan işlenmegine razylyk berýärsiňiz.',
+    adminLink: 'Admin paneli',
     aboutEyebrow: 'Biz barada',
     aboutTitle: 'Talant bilen ösüşiň arasynda ynamly hyzmatdaş',
     aboutLead:
@@ -48,15 +48,15 @@ export const companyCopy = {
     contactCandidate: 'Iş gözleýärin',
     contactEmployer: 'Işgär gözleýärin',
     contactOpen: 'Göni habarlaşmak',
-    contactNote: 'Formalar brauzer demo režiminde işleýär. Telefon we e-poçta arkaly göni habarlaşyp bolýar.',
+    contactNote: 'Arza formasynyň işjeň saklaýyş režimi formanyň içinde görkezilýär. Telefon we e-poçta arkaly hem göni habarlaşyp bolýar.',
   },
   ru: {
     nav: ['Услуги', 'Вакансии', 'О нас', 'Как мы работаем', 'Контакты'],
-    candidateText: 'Данные сохранятся в деморежиме в этом браузере и появятся в админ-панели. Сохраняются только имя и размер файла CV.',
-    employerText: 'Заявка работодателя сохранится в деморежиме в этом браузере и будет доступна в админ-панели.',
-    submitted: 'Спасибо! Заявка сохранена в демо-админ-панели этого браузера.',
-    privacy: 'Деморежим: данные хранятся только в localStorage этого браузера.',
-    adminLink: 'Демо-админка',
+    candidateText: 'Заполните основные данные и добавьте CV. В зависимости от активного backend-режима заявка будет отправлена в защищённую базу или локальное демохранилище.',
+    employerText: 'Укажите данные компании и открытой позиции. Активный способ хранения информации отображается внутри формы.',
+    submitted: 'Спасибо! Заявка принята.',
+    privacy: 'Отправляя форму, вы соглашаетесь на обработку данных компанией IDEGLI.',
+    adminLink: 'Админ-панель',
     aboutEyebrow: 'О нас',
     aboutTitle: 'Надёжная связь между талантом и ростом бизнеса',
     aboutLead:
@@ -92,6 +92,6 @@ export const companyCopy = {
     contactCandidate: 'Ищу работу',
     contactEmployer: 'Ищу сотрудника',
     contactOpen: 'Связаться напрямую',
-    contactNote: 'Формы работают в браузерном деморежиме. Для прямой связи используйте телефон или электронную почту.',
+    contactNote: 'Активный режим хранения заявки указан внутри формы. Также можно связаться напрямую по телефону или электронной почте.',
   },
 }
