@@ -8,6 +8,11 @@ export const contactInfo = {
 export const companyCopy = {
   tm: {
     nav: ['Hyzmatlar', 'Wakansiýalar', 'Biz barada', 'Iş tertibi', 'Habarlaşmak'],
+    candidateText: 'Maglumatlaryňyz şu brauzerde demo görnüşinde saklanar we admin panelde görkeziler. CV faýlynyň diňe ady hem-de ölçegi saklanýar.',
+    employerText: 'Işgär sargydyňyz şu brauzerde demo görnüşinde saklanar we admin panelde dolandyrylar.',
+    submitted: 'Sag boluň! Arza şu brauzerdäki demo admin panelinde saklandy.',
+    privacy: 'Demo režimi: maglumatlar diňe şu brauzeriň localStorage bölüminde saklanýar.',
+    adminLink: 'Admin demo',
     aboutEyebrow: 'Biz barada',
     aboutTitle: 'Talant bilen ösüşiň arasynda ynamly hyzmatdaş',
     aboutLead:
@@ -43,10 +48,15 @@ export const companyCopy = {
     contactCandidate: 'Iş gözleýärin',
     contactEmployer: 'Işgär gözleýärin',
     contactOpen: 'Göni habarlaşmak',
-    contactNote: 'Arza formalary häzirki wagtda demo režiminde. Telefon we e-poçta arkaly göni habarlaşyp bolýar.',
+    contactNote: 'Formalar brauzer demo režiminde işleýär. Telefon we e-poçta arkaly göni habarlaşyp bolýar.',
   },
   ru: {
     nav: ['Услуги', 'Вакансии', 'О нас', 'Как мы работаем', 'Контакты'],
+    candidateText: 'Данные сохранятся в деморежиме в этом браузере и появятся в админ-панели. Сохраняются только имя и размер файла CV.',
+    employerText: 'Заявка работодателя сохранится в деморежиме в этом браузере и будет доступна в админ-панели.',
+    submitted: 'Спасибо! Заявка сохранена в демо-админ-панели этого браузера.',
+    privacy: 'Деморежим: данные хранятся только в localStorage этого браузера.',
+    adminLink: 'Демо-админка',
     aboutEyebrow: 'О нас',
     aboutTitle: 'Надёжная связь между талантом и ростом бизнеса',
     aboutLead:
@@ -82,6 +92,6 @@ export const companyCopy = {
     contactCandidate: 'Ищу работу',
     contactEmployer: 'Ищу сотрудника',
     contactOpen: 'Связаться напрямую',
-    contactNote: 'Формы пока работают в деморежиме. Для прямой связи используйте телефон или электронную почту.',
+    contactNote: 'Формы работают в браузерном деморежиме. Для прямой связи используйте телефон или электронную почту.',
   },
 }
