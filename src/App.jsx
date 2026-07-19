@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import './company.css'
 import AboutSection from './components/AboutSection.jsx'
 import AdminDashboard from './components/AdminDashboard.jsx'
+import AdminPortal from './components/AdminPortal.jsx'
 import ApplicationSection from './components/ApplicationSection.jsx'
 import ContactSection from './components/ContactSection.jsx'
 import FinalCta from './components/FinalCta.jsx'
@@ -45,7 +46,9 @@ function App() {
   }
 
   if (isAdmin) {
-    return <AdminDashboard lang={lang} setLang={setLang} />
+    return backendMode === 'supabase'
+      ? <AdminPortal lang={lang} setLang={setLang} />
+      : <AdminDashboard lang={lang} setLang={setLang} />
   }
 
   return (
