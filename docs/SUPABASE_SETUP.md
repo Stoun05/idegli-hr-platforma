@@ -1,6 +1,6 @@
 # IDEGLI Supabase sazlamasy
 
-Bu görkezme public arza formalaryny Supabase/PostgreSQL bazasyna ibermek, private CV Storage-i sazlamak we goralan remote admin panelini açmak üçin niýetlenendir.
+Bu görkezme public arza formalaryny Supabase/PostgreSQL bazasyna ibermek, private CV Storage-i, HR audit taryhyny we goralan remote admin panelini sazlamak üçin niýetlenendir.
 
 ## 1. Supabase proýektini döretmek
 
@@ -21,6 +21,8 @@ Supabase Dashboard → SQL Editor bölüminde şu tertipde işlediň:
 ```text
 supabase/schema.sql
 supabase/storage.sql
+supabase/hr_activity.sql
+supabase/assign_admin_role.sql
 ```
 
 `schema.sql`:
@@ -41,6 +43,18 @@ supabase/storage.sql
 - PDF, DOC we DOCX MIME görnüşlerine rugsat berýär;
 - anonymous kandidata diňe öz bukjasyna upload/read/delete rugsadyny berýär;
 - `admin` we `hr` roluna ähli CV-leri okamak we pozmak rugsadyny berýär.
+
+`hr_activity.sql`:
+
+- içerki HR bellikleri üçin `application_notes` tablisasyny döredýär;
+- üýtgedilip bilinmeýän taryh üçin `application_events` tablisasyny döredýär;
+- arza döredilende, status üýtgände we bellik goşulanda database trigger arkaly audit ýazgysyny döredýär;
+- öňden bar bolan arzalar üçin başlangyç taryh ýazgysyny döredýär;
+- bellikleri we taryhy diňe `admin`/`hr` roluna açýar.
+
+`assign_admin_role.sql`:
+
+- öň döredilen Supabase Auth ulanyjysyna `admin` ýa-da `hr` roluny `app_metadata` içinde berýär.
 
 ## 4. Frontend açarlary
 
@@ -106,7 +120,23 @@ Kandidat akymy:
 5. HR/admin CV-ni private authenticated endpoint arkaly ýükläp alýar.
 6. Arza admin tarapyndan pozulsa, degişli CV hem pozulýar.
 
-## 8. Režimler
+## 8. HR bellikleri we audit taryhy
+
+Doly görkezme:
+
+```text
+docs/HR_ACTIVITY_SETUP.md
+```
+
+Remote admin panelde:
+
+- her arza üçin içerki bellik ýazylýar;
+- belligiň awtory, roly we wagty saklanýar;
+- status üýtgeşmesi database trigger tarapyndan awtomatik ýazylýar;
+- taryh frontend tarapyndan üýtgedilip ýa-da galplaşdyrylyp bilinmeýär;
+- public ulanyjy bellikleri we taryhy okap bilmeýär.
+
+## 9. Režimler
 
 ### Supabase sazlanmadyk bolsa
 
@@ -114,6 +144,7 @@ Kandidat akymy:
 - `#/admin` demo panelinde görünýär;
 - başga enjamda görünmeýär;
 - CV-niň diňe ady, ölçegi we MIME metadata-sy saklanýar;
+- HR bellikleri we audit taryhy elýeterli däl;
 - login talap edilmeýär, sebäbi bu diňe lokal demo maglumatydyr.
 
 ### Supabase sazlanan bolsa
@@ -122,10 +153,10 @@ Kandidat akymy:
 - kandidat CV private Storage-a ýüklenýär we arza bilen baglanyşdyrylýar;
 - açyk ulanyjy kandidat maglumatlaryny SELECT edip bilmeýär;
 - `#/admin` Supabase Auth login sahypasyny açýar;
-- diňe `admin` ýa-da `hr` roly remote maglumatlary we CV-leri görýär;
-- status üýtgetmek, CV almak we pozmak RLS arkaly barlanýar.
+- diňe `admin` ýa-da `hr` roly remote maglumatlary, CV-leri, bellikleri we taryhy görýär;
+- status üýtgetmek, bellik goşmak, CV almak we pozmak RLS arkaly barlanýar.
 
-## 9. Lokal admin mirror
+## 10. Lokal admin mirror
 
 Diňe test üçin:
 
@@ -135,7 +166,7 @@ VITE_ENABLE_LOCAL_ADMIN_MIRROR=true
 
 Bu Supabase-a üstünlikli iberilen arzanyň nusgasyny şol brauzeriň localStorage bölümine hem ýazýar. Production-da `false` saklamak maslahat berilýär.
 
-## 10. Barlaýyş
+## 11. Barlaýyş
 
 1. Saýty açyň.
 2. Kandidat formasyny PDF, DOC ýa-da DOCX CV bilen dolduryň.
@@ -143,6 +174,8 @@ Bu Supabase-a üstünlikli iberilen arzanyň nusgasyny şol brauzeriň localStor
 4. Table Editor → `applications` içinde `submitter_id` we `cv_metadata.storagePath` maglumatlaryny barlaň.
 5. Iş beriji formasyny dolduryp, CV metadata-synyň null bolandygyny barlaň.
 6. `#/admin` salgysynda admin hasaby bilen giriň.
-7. CV-ni ýükläp almagy, status üýtgetmegi we arza pozmagy barlaň.
-8. Arza pozulandan soň CV-niň bucket-den hem ýok bolandygyny barlaň.
-9. Roly ýok ulanyjynyň remote maglumatlary we CV-leri okap bilmeýändigini barlaň.
+7. CV-ni ýükläp almagy we status üýtgetmegi barlaň.
+8. `application_events` tablisasynda status üýtgeşmesiniň peýda bolandygyny barlaň.
+9. HR belligi goşup, `application_notes` we timeline ýazgysyny barlaň.
+10. Arza pozulandan soň degişli bellikleriň, taryhyň we CV-niň cascade/cleanup arkaly ýok bolandygyny barlaň.
+11. Roly ýok ulanyjynyň remote maglumatlary, CV-leri, bellikleri we taryhy okap bilmeýändigini barlaň.
