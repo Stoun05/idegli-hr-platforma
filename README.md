@@ -10,7 +10,10 @@ IDEGLI üçin işgär saýlap-seçiş, Executive Search we karýera konsultasiý
 - Gözleg we üç görnüşli filtr bilen wakansiýalar katalogy
 - Her wakansiýa üçin giňişleýin maglumat paneli
 - Saýlanan wakansiýanyň arza formasyna awtomatik geçirilmegi
-- Iş gözleýänler üçin arza formasy
+- Giňeldilen dalaşgär arza formasy
+- PDF, DOC we DOCX CV saýlamak interfeýsi
+- CV görnüşi we 5 MB ölçeg çägi boýunça frontend barlagy
+- Şahsy maglumatlaryň işlenmegine razylyk barlagy
 - Iş berijiler üçin işgär sargyt formasy
 - Düşnükli 4 tapgyrly recruitment prosesi
 - Accessibility we reduced-motion sazlamalary
@@ -43,13 +46,14 @@ npm run preview
 1. Başlangyç premium baş sahypa
 2. Kod gurluşyny aýratyn komponentlere bölmek
 3. Wakansiýalar katalogy, gözleg, filtrler we giňişleýin maglumat paneli
+4. Giňeldilen dalaşgär formasy we CV ýüklemek interfeýsi
 
 ## Indiki tapgyrlar
 
-1. Dalaşgär formasyny giňeltmek
-2. CV ýüklemek interfeýsini goşmak
-3. IDEGLI-niň hakyky logo, reňk we kontakt maglumatlaryny ýerleşdirmek
-4. Backend we maglumat bazasyny birikdirmek
+1. Iş beriji formasyny giňeltmek
+2. IDEGLI-niň hakyky logo, reňk we kontakt maglumatlaryny ýerleşdirmek
+3. Backend we maglumat bazasyny birikdirmek
+4. CV faýllaryny hakyky bulut ammarynda saklamak
 5. Admin panel we kandidat statuslaryny dolandyrmak
 6. Telegram/email habarnamalary
 7. Iş beriji we dalaşgär şahsy kabinetleri
@@ -57,4 +61,4 @@ npm run preview
 
 ## Bellik
 
-Häzirki wakansiýalar we arza formalary demo görnüşindedir. Formalar entek serwere maglumat ibermeýär. Hakyky wakansiýa şertleri IDEGLI tarapyndan tassyklanandan soň demo maglumatlary çalşylar.
+Häzirki wakansiýalar we arza formalary demo görnüşindedir. CV faýly frontendde saýlanýar we barlanýar, ýöne entek serwere ýüklenmeýär. Hakyky wakansiýa şertleri IDEGLI tarapyndan tassyklanandan soň demo maglumatlary çalşylar.
