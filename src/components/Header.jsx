@@ -9,8 +9,9 @@ export default function Header({ t, lang, menuOpen, setLang, setMenuOpen, scroll
       <nav className={menuOpen ? 'main-nav is-open' : 'main-nav'} aria-label="Esasy menýu">
         <a href="#services" onClick={() => setMenuOpen(false)}>{t.nav[0]}</a>
         <a href="#jobs" onClick={() => setMenuOpen(false)}>{t.nav[1]}</a>
-        <a href="#process" onClick={() => setMenuOpen(false)}>{t.nav[2]}</a>
-        <a href="#apply" onClick={() => setMenuOpen(false)}>{t.nav[3]}</a>
+        <a href="#about" onClick={() => setMenuOpen(false)}>{t.nav[2]}</a>
+        <a href="#process" onClick={() => setMenuOpen(false)}>{t.nav[3]}</a>
+        <a href="#contact" onClick={() => setMenuOpen(false)}>{t.nav[4]}</a>
       </nav>
 
       <div className="header-actions">
