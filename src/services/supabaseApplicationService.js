@@ -35,7 +35,7 @@ export async function submitSupabaseApplication(application) {
       apikey: backendConfig.supabasePublishableKey,
       Authorization: `Bearer ${backendConfig.supabasePublishableKey}`,
       'Content-Type': 'application/json',
-      Prefer: 'return=representation',
+      Prefer: 'return=minimal',
     },
     body: JSON.stringify(toDatabaseRecord(application)),
   })
@@ -45,6 +45,9 @@ export async function submitSupabaseApplication(application) {
     throw new Error(detail || `Supabase request failed with status ${response.status}.`)
   }
 
-  const rows = await response.json()
-  return Array.isArray(rows) ? rows[0] : rows
+  return {
+    audience: application.audience,
+    status: 'new',
+    submittedAt: new Date().toISOString(),
+  }
 }
