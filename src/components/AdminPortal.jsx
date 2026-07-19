@@ -13,6 +13,7 @@ import {
   fetchRemoteApplications,
   updateRemoteApplicationStatus,
 } from '../services/supabaseAdminService.js'
+import { downloadPrivateCv } from '../services/cvStorageService.js'
 
 export default function AdminPortal({ lang, setLang }) {
   const [session, setSession] = useState(null)
@@ -90,21 +91,26 @@ export default function AdminPortal({ lang, setLang }) {
     setError('')
   }
 
-  const handleRefresh = async () => {
+  const validSessionOrLogout = async () => {
     const activeSession = await getValidAdminSession()
 
     if (!activeSession || !isAllowedAdminSession(activeSession)) {
       await handleLogout()
-      return
+      return null
     }
 
     setSession(activeSession)
-    await loadApplications(activeSession)
+    return activeSession
+  }
+
+  const handleRefresh = async () => {
+    const activeSession = await validSessionOrLogout()
+    if (activeSession) await loadApplications(activeSession)
   }
 
   const handleStatusChange = async (id, status) => {
-    const activeSession = await getValidAdminSession()
-    if (!activeSession) return handleLogout()
+    const activeSession = await validSessionOrLogout()
+    if (!activeSession) return
 
     setIsLoadingData(true)
     setError('')
@@ -120,8 +126,8 @@ export default function AdminPortal({ lang, setLang }) {
   }
 
   const handleDelete = async (id) => {
-    const activeSession = await getValidAdminSession()
-    if (!activeSession) return handleLogout()
+    const activeSession = await validSessionOrLogout()
+    if (!activeSession) return
 
     setIsLoadingData(true)
     setError('')
@@ -131,6 +137,22 @@ export default function AdminPortal({ lang, setLang }) {
       setApplications((current) => current.filter((item) => item.id !== id))
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : 'Application could not be deleted.')
+    } finally {
+      setIsLoadingData(false)
+    }
+  }
+
+  const handleCvDownload = async (cv) => {
+    const activeSession = await validSessionOrLogout()
+    if (!activeSession) return
+
+    setIsLoadingData(true)
+    setError('')
+
+    try {
+      await downloadPrivateCv(activeSession.accessToken, cv)
+    } catch (downloadError) {
+      setError(downloadError instanceof Error ? downloadError.message : 'CV could not be downloaded.')
     } finally {
       setIsLoadingData(false)
     }
@@ -167,6 +189,7 @@ export default function AdminPortal({ lang, setLang }) {
       onRefresh={handleRefresh}
       onStatusChange={handleStatusChange}
       onDelete={handleDelete}
+      onCvDownload={handleCvDownload}
       onLogout={handleLogout}
     />
   )
