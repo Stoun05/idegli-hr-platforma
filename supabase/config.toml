@@ -1,0 +1,2 @@
+[functions.notify-hr]
+verify_jwt = false
