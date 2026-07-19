@@ -51,35 +51,10 @@ for each row execute function public.set_updated_at();
 alter table public.applications enable row level security;
 
 revoke all on table public.applications from anon, authenticated;
-grant insert on table public.applications to anon, authenticated;
 grant select, update, delete on table public.applications to authenticated;
+grant all on table public.applications to service_role;
 
 drop policy if exists "Public can submit applications" on public.applications;
-create policy "Public can submit applications"
-on public.applications
-for insert
-to anon, authenticated
-with check (
-  consent = true
-  and status = 'new'
-  and jsonb_typeof(fields) = 'object'
-  and (
-    (
-      audience = 'employer'
-      and submitter_id is null
-      and cv_metadata is null
-    )
-    or
-    (
-      audience = 'candidate'
-      and (select auth.uid()) is not null
-      and submitter_id = (select auth.uid())
-      and cv_metadata is not null
-      and cv_metadata ->> 'bucket' = 'candidate-cvs'
-      and cv_metadata ->> 'storagePath' like ('anonymous/' || (select auth.uid())::text || '/%')
-    )
-  )
-);
 
 drop policy if exists "HR admins can read applications" on public.applications;
 create policy "HR admins can read applications"
@@ -112,15 +87,15 @@ using (
 );
 
 comment on table public.applications is
-  'Candidate applications and employer recruitment requests submitted through IDEGLI.';
+  'Candidate applications and employer recruitment requests submitted through the protected IDEGLI Edge Function.';
 
 comment on column public.applications.fields is
-  'Flexible form payload. Personal data is protected by row level security.';
+  'Sanitized form payload. Personal data is protected by row level security.';
 
 comment on column public.applications.cv_metadata is
   'Private Storage bucket, path, filename, size and MIME type for the candidate CV.';
 
 comment on column public.applications.submitter_id is
-  'Anonymous Supabase Auth user that uploaded the candidate CV. Employer requests can remain null.';
+  'Legacy optional submitter reference. New public submissions are created by the protected Edge Function.';
 
 commit;
