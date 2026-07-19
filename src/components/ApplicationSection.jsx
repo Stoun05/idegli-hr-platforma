@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import '../application.css'
 import { applicationCopy } from '../data/applicationContent.js'
 import ArrowIcon from './ArrowIcon.jsx'
+import EmployerRequestFields from './EmployerRequestFields.jsx'
 
 const MAX_CV_SIZE = 5 * 1024 * 1024
 const ALLOWED_CV_EXTENSIONS = ['pdf', 'doc', 'docx']
@@ -199,20 +200,7 @@ export default function ApplicationSection({
                 </div>
               </>
             ) : (
-              <>
-                <label>
-                  <span>{t.fields.company}</span>
-                  <input required name="company" onChange={resetValidation} />
-                </label>
-                <label>
-                  <span>{t.fields.vacancy}</span>
-                  <input required name="vacancy" onChange={resetValidation} />
-                </label>
-                <label className="wide-field">
-                  <span>{t.fields.message}</span>
-                  <textarea name="message" rows="4" onChange={resetValidation} />
-                </label>
-              </>
+              <EmployerRequestFields t={t} extra={extra} resetValidation={resetValidation} />
             )}
 
             <label className="consent-field">
