@@ -13,28 +13,48 @@ import {
   fetchRemoteApplications,
   updateRemoteApplicationStatus,
 } from '../services/supabaseAdminService.js'
+import {
+  createApplicationNote,
+  deleteApplicationNote,
+  fetchApplicationActivity,
+} from '../services/supabaseActivityService.js'
 import { deleteCandidateCv, downloadPrivateCv } from '../services/cvStorageService.js'
+
+const EMPTY_ACTIVITY = {
+  notesByApplication: {},
+  eventsByApplication: {},
+}
 
 export default function AdminPortal({ lang, setLang }) {
   const [session, setSession] = useState(null)
   const [applications, setApplications] = useState([])
+  const [activity, setActivity] = useState(EMPTY_ACTIVITY)
   const [isBooting, setIsBooting] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [error, setError] = useState('')
 
-  const loadApplications = async (activeSession) => {
+  const loadRemoteData = async (activeSession) => {
     setIsLoadingData(true)
     setError('')
 
     try {
-      const rows = await fetchRemoteApplications(activeSession.accessToken)
+      const [rows, nextActivity] = await Promise.all([
+        fetchRemoteApplications(activeSession.accessToken),
+        fetchApplicationActivity(activeSession.accessToken),
+      ])
       setApplications(rows)
+      setActivity(nextActivity)
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Applications could not be loaded.')
+      setError(loadError instanceof Error ? loadError.message : 'Remote HR data could not be loaded.')
     } finally {
       setIsLoadingData(false)
     }
+  }
+
+  const refreshActivity = async (activeSession) => {
+    const nextActivity = await fetchApplicationActivity(activeSession.accessToken)
+    setActivity(nextActivity)
   }
 
   useEffect(() => {
@@ -47,7 +67,7 @@ export default function AdminPortal({ lang, setLang }) {
 
       if (storedSession && isAllowedAdminSession(storedSession)) {
         setSession(storedSession)
-        await loadApplications(storedSession)
+        await loadRemoteData(storedSession)
       } else if (storedSession) {
         await signOutAdmin(storedSession)
       }
@@ -76,7 +96,7 @@ export default function AdminPortal({ lang, setLang }) {
       }
 
       setSession(nextSession)
-      await loadApplications(nextSession)
+      await loadRemoteData(nextSession)
     } catch {
       setError(adminLoginCopy[lang].loginError)
     } finally {
@@ -87,6 +107,7 @@ export default function AdminPortal({ lang, setLang }) {
   const handleLogout = async () => {
     await signOutAdmin(session)
     setApplications([])
+    setActivity(EMPTY_ACTIVITY)
     setSession(null)
     setError('')
   }
@@ -105,7 +126,7 @@ export default function AdminPortal({ lang, setLang }) {
 
   const handleRefresh = async () => {
     const activeSession = await validSessionOrLogout()
-    if (activeSession) await loadApplications(activeSession)
+    if (activeSession) await loadRemoteData(activeSession)
   }
 
   const handleStatusChange = async (id, status) => {
@@ -118,8 +139,47 @@ export default function AdminPortal({ lang, setLang }) {
     try {
       await updateRemoteApplicationStatus(activeSession.accessToken, id, status)
       setApplications((current) => current.map((item) => item.id === id ? { ...item, status } : item))
+      await refreshActivity(activeSession)
     } catch (updateError) {
       setError(updateError instanceof Error ? updateError.message : 'Status could not be updated.')
+    } finally {
+      setIsLoadingData(false)
+    }
+  }
+
+  const handleAddNote = async (applicationId, body) => {
+    const activeSession = await validSessionOrLogout()
+    if (!activeSession) throw new Error('Admin session expired.')
+
+    setIsLoadingData(true)
+    setError('')
+
+    try {
+      await createApplicationNote(activeSession.accessToken, applicationId, body)
+      await refreshActivity(activeSession)
+    } catch (noteError) {
+      const message = noteError instanceof Error ? noteError.message : 'HR note could not be saved.'
+      setError(message)
+      throw new Error(message)
+    } finally {
+      setIsLoadingData(false)
+    }
+  }
+
+  const handleDeleteNote = async (noteId) => {
+    const activeSession = await validSessionOrLogout()
+    if (!activeSession) throw new Error('Admin session expired.')
+
+    setIsLoadingData(true)
+    setError('')
+
+    try {
+      await deleteApplicationNote(activeSession.accessToken, noteId)
+      await refreshActivity(activeSession)
+    } catch (noteError) {
+      const message = noteError instanceof Error ? noteError.message : 'HR note could not be deleted.'
+      setError(message)
+      throw new Error(message)
     } finally {
       setIsLoadingData(false)
     }
@@ -142,6 +202,13 @@ export default function AdminPortal({ lang, setLang }) {
 
       await deleteRemoteApplication(activeSession.accessToken, id)
       setApplications((current) => current.filter((item) => item.id !== id))
+      setActivity((current) => {
+        const notesByApplication = { ...current.notesByApplication }
+        const eventsByApplication = { ...current.eventsByApplication }
+        delete notesByApplication[id]
+        delete eventsByApplication[id]
+        return { notesByApplication, eventsByApplication }
+      })
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : 'Application could not be deleted.')
     } finally {
@@ -187,6 +254,7 @@ export default function AdminPortal({ lang, setLang }) {
       setLang={setLang}
       mode="remote"
       applications={applications}
+      activity={activity}
       remoteError={error}
       remoteBusy={isLoadingData}
       remoteUser={{
@@ -195,6 +263,8 @@ export default function AdminPortal({ lang, setLang }) {
       }}
       onRefresh={handleRefresh}
       onStatusChange={handleStatusChange}
+      onAddNote={handleAddNote}
+      onDeleteNote={handleDeleteNote}
       onDelete={handleDelete}
       onCvDownload={handleCvDownload}
       onLogout={handleLogout}
