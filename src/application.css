@@ -13,6 +13,42 @@
   border-color: var(--accent);
 }
 
+.form-grid input[type="date"] {
+  color-scheme: dark;
+}
+
+.form-section-label {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 10px;
+  padding: 18px 0 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.form-section-label:first-of-type {
+  margin-top: 0;
+  padding-top: 4px;
+  border-top: 0;
+}
+
+.form-section-label span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: var(--forest);
+  background: var(--accent);
+  font-size: 0.62rem;
+  font-weight: 850;
+}
+
+.form-section-label strong {
+  font-size: 0.8rem;
+  font-weight: 720;
+}
+
 .cv-field {
   grid-column: 1 / -1;
   display: grid;
@@ -122,7 +158,8 @@
   line-height: 1.5;
 }
 
-.consent-field {
+.consent-field,
+.confidential-field {
   grid-column: 1 / -1;
   display: flex !important;
   grid-template-columns: none !important;
@@ -131,7 +168,15 @@
   padding-top: 4px;
 }
 
-.consent-field input {
+.confidential-field {
+  padding: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.consent-field input,
+.confidential-field input {
   flex: 0 0 auto;
   width: 17px;
   height: 17px;
@@ -139,7 +184,8 @@
   accent-color: var(--accent);
 }
 
-.consent-field span {
+.consent-field span,
+.confidential-field span {
   color: rgba(255, 255, 255, 0.58) !important;
   font-size: 0.69rem !important;
   font-weight: 500 !important;
@@ -160,6 +206,8 @@
 @media (max-width: 760px) {
   .cv-field,
   .consent-field,
+  .confidential-field,
+  .form-section-label,
   .form-validation-summary {
     grid-column: 1;
   }
