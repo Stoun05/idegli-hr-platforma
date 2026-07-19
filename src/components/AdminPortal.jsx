@@ -23,6 +23,7 @@ import { deleteCandidateCv, downloadPrivateCv } from '../services/cvStorageServi
 const EMPTY_ACTIVITY = {
   notesByApplication: {},
   eventsByApplication: {},
+  deliveriesByApplication: {},
 }
 
 export default function AdminPortal({ lang, setLang }) {
@@ -205,9 +206,11 @@ export default function AdminPortal({ lang, setLang }) {
       setActivity((current) => {
         const notesByApplication = { ...current.notesByApplication }
         const eventsByApplication = { ...current.eventsByApplication }
+        const deliveriesByApplication = { ...current.deliveriesByApplication }
         delete notesByApplication[id]
         delete eventsByApplication[id]
-        return { notesByApplication, eventsByApplication }
+        delete deliveriesByApplication[id]
+        return { notesByApplication, eventsByApplication, deliveriesByApplication }
       })
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : 'Application could not be deleted.')
