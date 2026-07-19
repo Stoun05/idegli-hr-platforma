@@ -158,34 +158,47 @@
   line-height: 1.5;
 }
 
-.consent-field,
-.confidential-field {
+.form-grid label.consent-field,
+.form-grid label.confidential-field {
   grid-column: 1 / -1;
-  display: flex !important;
-  grid-template-columns: none !important;
-  align-items: flex-start;
-  gap: 11px !important;
+  display: grid !important;
+  grid-template-columns: 18px minmax(0, 1fr) !important;
+  align-items: start;
+  gap: 12px !important;
+  min-height: 0;
   padding-top: 4px;
 }
 
-.confidential-field {
+.form-grid label.confidential-field {
   padding: 15px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.03);
 }
 
-.consent-field input,
-.confidential-field input {
-  flex: 0 0 auto;
-  width: 17px;
-  height: 17px;
-  margin: 2px 0 0;
+.form-grid label.consent-field input[type="checkbox"],
+.form-grid label.confidential-field input[type="checkbox"] {
+  appearance: auto;
+  flex: none;
+  width: 18px !important;
+  min-width: 18px;
+  max-width: 18px;
+  height: 18px !important;
+  min-height: 18px;
+  margin: 2px 0 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 3px;
+  background: transparent !important;
+  box-shadow: none !important;
   accent-color: var(--accent);
 }
 
-.consent-field span,
-.confidential-field span {
+.form-grid label.consent-field > span,
+.form-grid label.confidential-field > span {
+  display: block;
+  min-width: 0;
+  width: auto !important;
   color: rgba(255, 255, 255, 0.58) !important;
   font-size: 0.69rem !important;
   font-weight: 500 !important;
