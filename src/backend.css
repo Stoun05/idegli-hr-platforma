@@ -1,0 +1,53 @@
+.backend-mode-card {
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  gap: 12px;
+  align-items: start;
+  margin-top: 26px;
+  padding: 15px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.backend-mode-card > span {
+  width: 10px;
+  height: 10px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: #f4b96c;
+  box-shadow: 0 0 0 5px rgba(244, 185, 108, 0.1);
+}
+
+.backend-mode-card.is-remote > span {
+  background: var(--accent);
+  box-shadow: 0 0 0 5px rgba(216, 255, 99, 0.1);
+}
+
+.backend-mode-card strong,
+.backend-mode-card small {
+  display: block;
+}
+
+.backend-mode-card strong {
+  color: #fff;
+  font-size: 0.74rem;
+}
+
+.backend-mode-card small {
+  margin-top: 5px;
+  color: rgba(255, 255, 255, 0.43);
+  font-size: 0.65rem;
+  line-height: 1.5;
+}
+
+.form-submit-row .button:disabled {
+  cursor: wait;
+  opacity: 0.68;
+  transform: none;
+}
+
+.submit-success-message {
+  color: var(--accent) !important;
+  font-weight: 650;
+}
