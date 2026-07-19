@@ -47,6 +47,7 @@ function App() {
         <ProcessSection t={t} />
         <ApplicationSection
           t={t}
+          lang={lang}
           audience={audience}
           setAudience={setAudience}
           submitted={submitted}
