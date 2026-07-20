@@ -55,6 +55,19 @@ function cleanText(value: unknown, maxLength: number) {
   return text || null
 }
 
+function safeCvMetadata(value: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  const cv = value as Record<string, unknown>
+
+  return {
+    name: typeof cv.name === 'string' ? cv.name : 'candidate-cv',
+    size: Number(cv.size || 0),
+    type: typeof cv.type === 'string' ? cv.type : '',
+    uploadedAt: typeof cv.uploadedAt === 'string' ? cv.uploadedAt : '',
+    source: 'candidate-profile',
+  }
+}
+
 function normalizeCandidateProfile(row: Record<string, unknown>) {
   return {
     role: row.candidate_role || '',
@@ -62,7 +75,7 @@ function normalizeCandidateProfile(row: Record<string, unknown>) {
     languages: row.candidate_languages || '',
     salary: row.candidate_salary || '',
     message: row.candidate_message || '',
-    cv: row.candidate_cv_metadata || null,
+    cv: safeCvMetadata(row.candidate_cv_metadata),
   }
 }
 
@@ -156,7 +169,14 @@ Deno.serve(async (request) => {
     }
 
     const formData = await request.formData()
-    const rawFields = JSON.parse(String(formData.get('fields') || '{}'))
+    let rawFields: Record<string, unknown>
+
+    try {
+      rawFields = JSON.parse(String(formData.get('fields') || '{}'))
+    } catch {
+      throw new PublicError('Candidate profile data is invalid.')
+    }
+
     const experienceKey = String(rawFields.experienceKey || '').trim()
 
     if (!EXPERIENCE_KEYS.has(experienceKey)) {
@@ -172,7 +192,6 @@ Deno.serve(async (request) => {
     }
 
     const cv = formData.get('cv')
-    let nextCv = oldCv
 
     if (cv instanceof File && cv.size > 0) {
       const { extension, mime } = validatedCv(cv)
@@ -188,7 +207,7 @@ Deno.serve(async (request) => {
 
       if (uploadError) throw uploadError
 
-      nextCv = {
+      updatePayload.candidate_cv_metadata = {
         bucket: CV_BUCKET,
         storagePath: uploadedPath,
         name: cv.name.slice(0, 255),
@@ -197,7 +216,6 @@ Deno.serve(async (request) => {
         uploadedAt: new Date().toISOString(),
         source: 'candidate-profile',
       }
-      updatePayload.candidate_cv_metadata = nextCv
     }
 
     const { data: updated, error: updateError } = await supabase
