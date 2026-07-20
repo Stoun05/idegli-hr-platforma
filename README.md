@@ -29,16 +29,18 @@ IDEGLI üçin işgär saýlap-seçiş, Executive Search, karýera konsultasiýas
 
 ### Kandidat we iş beriji şahsy kabinetleri
 
-- `#/portal` arkaly aýratyn giriş we registrasiýa;
+- `#/portal` arkaly giriş we registrasiýa;
 - kandidat ýa-da iş beriji hasap görnüşi;
 - email/password Supabase Auth;
-- e-poçta tassyklama ýagdaýy;
-- access token refresh we aýratyn portal sessiýasy;
+- e-poçta tassyklama callback-i;
+- access/refresh token sessiýasy;
 - öz profilini görmek we redaktirlemek;
 - diňe öz `owner_id` ýazgylaryny görmek;
-- ähli arzalaryň we aktiw prosesleriň sany;
-- status, iberilen wagt, soňky täzelenme we forma maglumatlary;
-- täze arza üçin degişli kandidat ýa-da iş beriji formasyna geçmek;
+- arza statusy, iberilen wagt we soňky täzelenme;
+- paroly dikeltmek;
+- girişli hasapda paroly üýtgetmek;
+- häzirki parol ýa-da reauthentication nonce barlagy;
+- e-poçtany üýtgetmek we tassyklama callback-i;
 - RLS arkaly başga ulanyjynyň maglumatyndan izolýasiýa.
 
 ### Admin paneli
@@ -66,22 +68,10 @@ IDEGLI üçin işgär saýlap-seçiş, Executive Search, karýera konsultasiýas
 
 ## Live salgylar
 
-Saýt:
-
 ```text
-https://stoun05.github.io/idegli-hr-platforma/
-```
-
-Şahsy kabinet:
-
-```text
-https://stoun05.github.io/idegli-hr-platforma/#/portal
-```
-
-Admin paneli:
-
-```text
-https://stoun05.github.io/idegli-hr-platforma/#/admin
+Saýt:          https://stoun05.github.io/idegli-hr-platforma/
+Şahsy kabinet: https://stoun05.github.io/idegli-hr-platforma/#/portal
+Admin paneli:  https://stoun05.github.io/idegli-hr-platforma/#/admin
 ```
 
 ## Backend režimleri
@@ -91,7 +81,6 @@ https://stoun05.github.io/idegli-hr-platforma/#/admin
 Supabase frontend maglumatlary ýok bolsa:
 
 - forma localStorage-a ýazylýar;
-- maglumat diňe şol brauzerde görünýär;
 - CV-niň diňe metadata-sy saklanýar;
 - `#/admin` lokal demo panelini açýar;
 - `#/portal` konfigurasiýa habaryny görkezýär;
@@ -126,7 +115,7 @@ Audit event + HR notification
 
 Public ulanyja `applications` tablisasynda INSERT ýa-da `candidate-cvs` bucket-de upload rugsady berilmeýär. Bu hereketleri diňe server-side Edge Function service role ýerine ýetirýär.
 
-> `service_role`, `sb_secret_...`, Turnstile secret, Telegram tokeni we Resend key hiç wagt frontend ýa-da GitHub Pages build-e goýulmaýar.
+> `service_role`, `sb_secret_...`, Turnstile secret, Telegram tokeni we Resend key frontend ýa-da GitHub Pages build-e goýulmaýar.
 
 ## Supabase SQL tertibi
 
@@ -147,52 +136,56 @@ supabase/functions/submit-application/index.ts
 supabase/functions/notify-hr/index.ts
 ```
 
-Deployment:
-
 ```bash
 supabase functions deploy submit-application --project-ref YOUR_PROJECT_REF
 supabase functions deploy notify-hr --project-ref YOUR_PROJECT_REF
 ```
 
-Manual GitHub workflow:
+Manual deployment workflow:
 
 ```text
 .github/workflows/deploy-supabase-functions.yml
 ```
 
-Gerekli GitHub repository secrets:
+GitHub repository secrets:
 
 ```text
 SUPABASE_ACCESS_TOKEN
 SUPABASE_PROJECT_ID
-```
-
-## GitHub Pages maglumatlary
-
-Repository secrets:
-
-```text
 VITE_SUPABASE_URL
 VITE_SUPABASE_PUBLISHABLE_KEY
 ```
 
-Repository variables:
+GitHub repository variables:
 
 ```text
 VITE_TURNSTILE_SITE_KEY
 VITE_ENABLE_LOCAL_ADMIN_MIRROR=false
 ```
 
+## Portal Auth callback-lary
+
+```text
+?portal=callback   — registrasiýa we email-change tassyklamasy
+?portal=recovery   — password recovery sahypasy
+#/portal           — giriş we dashboard
+```
+
+Callback access token-i URL fragmentinden alýar we Auth `/user` endpoint-i arkaly täzeden tassyklaýar.
+
 ## Portal howpsuzlygy
 
 - `portal_profiles.id = auth.users.id`;
 - `account_type` diňe `candidate` ýa-da `employer`;
-- hasap görnüşi profil döredilenden soň frontend tarapyndan üýtgedilmeýär;
+- hasap görnüşi frontend tarapyndan üýtgedilmeýär;
 - öz profilini diňe `auth.uid() = id` bolan ulanyjy görýär;
 - öz arzalaryny diňe `applications.owner_id = auth.uid()` bolan ulanyjy görýär;
 - kandidat hasaby diňe kandidat formasyny, iş beriji hasaby diňe iş beriji formasyny öz kabinetine baglap biler;
 - guest arzalar `owner_id = null` bolup galýar;
-- portal we admin sessiýalary dürli localStorage key-lerinde saklanýar.
+- portal we admin sessiýalary dürli localStorage key-lerinde saklanýar;
+- password recovery sessiýasy parol täzelenenden soň arassalanýar;
+- e-poçta üýtgetmezden öň häzirki parol täzeden barlanýar;
+- Secure password change açyk bolsa reauthentication nonce ulanylýar.
 
 ## Turnstile we rate-limit
 
@@ -204,14 +197,6 @@ Bir kontakt:  3 synanyşyk / 24 sagat
 ```
 
 `submission_attempts` tablisasy raw IP, e-poçta ýa-da telefon saklamaýar. Diňe server-only pepper bilen SHA-256 hash, outcome we wagt saklanýar.
-
-Turnstile widget:
-
-- explicit SPA render;
-- `action: idegli_application`;
-- hostname barlagy;
-- token her iberişden soň reset;
-- production site key ýok bolsa remote forma ýapyk.
 
 ## Dokumentasiýa
 
@@ -296,41 +281,39 @@ supabase/
 12. Telegram/e-poçta Edge Function habarnamalary
 13. Cloudflare Turnstile, server-side Siteverify we privacy-preserving rate-limit
 14. Kandidat we iş beriji şahsy kabinetleri, profil RLS we owner-linked arzalar
+15. Password recovery, email change, reauthentication we kabinet howpsuzlyk sazlamalary
 
-## 14-nji tapgyrda goşulanlar
+## 15-nji tapgyrda goşulanlar
 
-- `portal_profiles` tablisa we Auth trigger;
-- `applications.owner_id`;
-- kandidat/iş beriji registrasiýasy we login;
-- e-poçta tassyklama ýagdaýy;
-- portal access/refresh token sessiýasy;
-- kandidat we iş beriji dashboard-y;
-- profil redaktirlemesi;
-- diňe öz arzalaryny görkezýän RLS;
-- portal JWT-ni `submit-application` function-a geçirmek;
-- serwerde JWT we account type barlagy;
-- täze arzany portal hasabyna awtomatik baglamak;
-- baş sahypa header/footer kabinet salgylanmalary;
-- portal setup dokumentasiýasy.
+- giriş sahypasynda **Paroly ýatdan çykardyňyzmy?** akymy;
+- `/auth/v1/recover` bilen recovery e-poçtasy;
+- `?portal=recovery` password update sahypasy;
+- callback fragment tokenini `/auth/v1/user` arkaly barlamak;
+- recovery tamamlananda sessiýany arassalamak;
+- dashboard-da **Hasap howpsuzlygy** paneli;
+- häzirki parol bilen password update;
+- `/auth/v1/reauthenticate` arkaly 6 belgili nonce;
+- Secure password change bilen nonce update;
+- häzirki paroly täzeden barlap e-poçta üýtgetmek;
+- `?portal=callback` registrasiýa/email-change callback-i;
+- Auth sessiýasynyň öňki expiry maglumatyny saklamak;
+- password/email security flow dokumentasiýasy.
 
 ## Çäklendirmeler
 
 - häzirki wakansiýalar demo maglumatlarydyr;
-- Supabase secret-lary ýok bolsa live saýt local demo režiminde işleýär;
-- Supabase bar, emma Turnstile site key ýok bolsa production forma iberişi ýapyk bolýar;
 - SQL migration-lar we Edge Function deployment aýratyn ýerine ýetirilmelidir;
-- portal e-poçta tassyklamasy üçin Auth Site URL we Redirect URLs sazlanmalydyr;
+- Auth Site URL we Redirect URLs sazlanmalydyr;
+- production recovery/confirmation e-poçtalary üçin custom SMTP maslahat berilýär;
 - öňki guest arzalar täze hasaba awtomatik baglanmaýar;
-- kandidat/iş beriji parol dikeltmek interfeýsi entek ýok;
 - kandidat kabinetinde CV-ni täzeden ýüklemek ýa-da arzany yzyna almak entek ýok;
-- Resend domeni tassyklanmalydyr;
-- Telegram bot degişli chat-a habar ibermäge rugsatly bolmalydyr;
+- iş beriji üçin birnäçe team member entek ýok;
 - resmi IDEGLI logo we gutarnykly brend reňkleri entek tassyklanmady.
 
 ## Indiki ýol kartasy
 
-1. Parol dikeltmek we e-poçta üýtgetmek akymy
-2. Kandidat CV/anketa profilini gaýtadan ulanmak
+1. Kandidat CV/anketa profilini gaýtadan ulanmak
+2. Kandidat arzasyny yzyna almak we CV-ni täzelemek
 3. Iş beriji kompaniýa profili we birnäçe team member
 4. Hakyky IDEGLI logo, brend reňkleri we wakansiýalar
 5. SEO, analitika we hakyky domen
