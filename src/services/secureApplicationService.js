@@ -27,6 +27,7 @@ export async function submitSecureApplication(application, portalSession = null)
     locale: application.locale || 'tm',
     fields: application.fields,
     consent: true,
+    useProfileCv: application.useProfileCv === true,
   }))
   formData.append('turnstileToken', application.turnstileToken)
 
