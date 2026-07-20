@@ -13,6 +13,10 @@
   background: #fff;
 }
 
+.portal-nav-link {
+  display: none;
+}
+
 .footer-portal-link {
   color: #d8ff63;
   font-weight: 760;
@@ -21,5 +25,11 @@
 @media (max-width: 1120px) {
   .header-account-link {
     display: none;
+  }
+
+  .portal-nav-link {
+    display: block;
+    color: #315448;
+    font-weight: 800;
   }
 }
