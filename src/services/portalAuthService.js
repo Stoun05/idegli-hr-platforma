@@ -19,10 +19,15 @@ function portalRedirectUrl(flow) {
 }
 
 function persistSession(payload, previousSession = null) {
+  const nextExpiry = payload.expires_at
+    || (payload.expires_in ? Math.floor(Date.now() / 1000) + Number(payload.expires_in) : 0)
+    || previousSession?.expiresAt
+    || Math.floor(Date.now() / 1000) + 3600
+
   const session = {
     accessToken: payload.access_token || previousSession?.accessToken || '',
     refreshToken: payload.refresh_token || previousSession?.refreshToken || '',
-    expiresAt: payload.expires_at || Math.floor(Date.now() / 1000) + Number(payload.expires_in || 3600),
+    expiresAt: nextExpiry,
     tokenType: payload.token_type || previousSession?.tokenType || 'bearer',
     user: payload.user || previousSession?.user || null,
   }
