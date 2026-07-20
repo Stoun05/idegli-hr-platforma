@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import '../portal.css'
+import CandidateProfilePanel from './CandidateProfilePanel.jsx'
 import PortalSecurityPanel from './PortalSecurityPanel.jsx'
 
 const copy = {
@@ -46,7 +47,8 @@ function formatDate(value, lang) {
 
 export default function PortalDashboard({
   lang, setLang, session, profile, applications, busy, error,
-  onRefresh, onSaveProfile, onChangePassword, onSendNonce, onChangeEmail, onLogout,
+  onRefresh, onSaveProfile, onSaveCandidateProfile, onDeleteCandidateCv,
+  onChangePassword, onSendNonce, onChangeEmail, onLogout,
 }) {
   const [form, setForm] = useState(profile)
   const [saved, setSaved] = useState(false)
@@ -115,6 +117,16 @@ export default function PortalDashboard({
                 <button className="portal-primary-button" type="submit" disabled={busy}>{busy ? t.saving : t.save}</button>
               </form>
             </section>
+
+            {profile.accountType === 'candidate' && (
+              <CandidateProfilePanel
+                lang={lang}
+                profile={profile.candidateProfile}
+                busy={busy}
+                onSave={onSaveCandidateProfile}
+                onDeleteCv={onDeleteCandidateCv}
+              />
+            )}
 
             <PortalSecurityPanel
               lang={lang}
