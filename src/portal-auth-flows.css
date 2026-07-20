@@ -1,0 +1,88 @@
+.portal-reset-heading,
+.portal-recovery-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.portal-reset-heading strong {
+  color: #315448;
+  font-size: 0.78rem;
+}
+
+.portal-reset-heading button,
+.portal-forgot-button,
+.portal-recovery-header button {
+  border: 0;
+  color: #315448;
+  background: transparent;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.portal-forgot-button {
+  justify-self: end;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.portal-recovery-shell {
+  min-height: 100vh;
+}
+
+.portal-recovery-card {
+  width: min(680px, 94vw);
+}
+
+.portal-recovery-card > .portal-recovery-header {
+  margin-top: 0;
+}
+
+.portal-recovery-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.portal-recovery-form label {
+  display: grid;
+  gap: 8px;
+}
+
+.portal-recovery-form label > span {
+  color: #52615a;
+  font-size: 0.68rem;
+  font-weight: 780;
+}
+
+.portal-recovery-form input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 12px;
+  color: #17231e;
+  background: #fbfbf8;
+  font: inherit;
+}
+
+.portal-recovery-success {
+  display: grid;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.portal-recovery-success .portal-primary-button {
+  width: fit-content;
+}
+
+@media (max-width: 560px) {
+  .portal-reset-heading,
+  .portal-recovery-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
