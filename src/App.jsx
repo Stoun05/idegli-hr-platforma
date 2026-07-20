@@ -10,6 +10,7 @@ import Footer from './components/Footer.jsx'
 import Header from './components/Header.jsx'
 import HeroSection from './components/HeroSection.jsx'
 import JobsSection from './components/JobsSection.jsx'
+import PortalPage from './components/PortalPage.jsx'
 import ProcessSection from './components/ProcessSection.jsx'
 import ServicesSection from './components/ServicesSection.jsx'
 import { companyCopy } from './data/companyContent.js'
@@ -22,13 +23,28 @@ function App() {
   const [audience, setAudience] = useState('candidate')
   const [submitted, setSubmitted] = useState(false)
   const [selectedRole, setSelectedRole] = useState('')
-  const [isAdmin, setIsAdmin] = useState(() => window.location.hash === '#/admin')
+  const [route, setRoute] = useState(() => window.location.hash)
   const t = useMemo(() => ({ ...copy[lang], ...companyCopy[lang] }), [lang])
   const backendMode = getApplicationBackendMode()
 
   useEffect(() => {
-    const handleHashChange = () => setIsAdmin(window.location.hash === '#/admin')
+    const handleHashChange = () => {
+      const hash = window.location.hash
+      setRoute(hash)
+      setMenuOpen(false)
+
+      if (hash === '#apply-candidate' || hash === '#apply-employer') {
+        setAudience(hash === '#apply-candidate' ? 'candidate' : 'employer')
+        setSelectedRole('')
+        setSubmitted(false)
+        window.setTimeout(() => {
+          document.getElementById('apply')?.scrollIntoView({ behavior: 'smooth' })
+        }, 0)
+      }
+    }
+
     window.addEventListener('hashchange', handleHashChange)
+    handleHashChange()
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
@@ -45,10 +61,14 @@ function App() {
     return result
   }
 
-  if (isAdmin) {
+  if (route === '#/admin') {
     return backendMode === 'supabase'
       ? <AdminPortal lang={lang} setLang={setLang} />
       : <AdminDashboard lang={lang} setLang={setLang} />
+  }
+
+  if (route === '#/portal') {
+    return <PortalPage lang={lang} setLang={setLang} />
   }
 
   return (
@@ -83,7 +103,7 @@ function App() {
         <FinalCta t={t} scrollToForm={scrollToForm} />
       </main>
 
-      <Footer t={t} />
+      <Footer t={t} lang={lang} />
     </div>
   )
 }
