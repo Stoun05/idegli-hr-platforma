@@ -1,0 +1,25 @@
+.header-account-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 15px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 760;
+}
+
+.header-account-link:hover {
+  background: #fff;
+}
+
+.footer-portal-link {
+  color: #d8ff63;
+  font-weight: 760;
+}
+
+@media (max-width: 1120px) {
+  .header-account-link {
+    display: none;
+  }
+}
