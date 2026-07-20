@@ -1,12 +1,12 @@
 # IDEGLI Supabase sazlamasy
 
-Bu görkezme public formalary, kandidat/iş beriji kabinetlerini, private CV Storage-i, Turnstile/rate-limit goragyny, remote admin panelini, HR audit taryhyny we Telegram/e-poçta habarnamalaryny sazlamak üçin niýetlenendir.
+Bu görkezme public formalary, kandidat/iş beriji kabinetlerini, reusable kandidat anketasyny, private CV Storage-i, Turnstile/rate-limit goragyny, remote admin panelini, HR audit taryhyny we Telegram/e-poçta habarnamalaryny sazlamak üçin niýetlenendir.
 
 ## 1. Supabase proýekti
 
 Supabase Dashboard-da täze proýekt dörediň. Database parolyny ygtybarly ýerde saklaň.
 
-Anonymous Sign-Ins gerek däl. Public arzalar `submit-application` Edge Function service role arkaly, kabinet hasaplary bolsa email/password Supabase Auth arkaly işleýär.
+Anonymous Sign-Ins gerek däl. Public arzalar `submit-application`, kandidat anketa/CV hereketleri `portal-profile`, kabinet girişleri bolsa email/password Supabase Auth arkaly işleýär.
 
 ## 2. SQL tertibi
 
@@ -23,14 +23,14 @@ supabase/assign_admin_role.sql
 ```
 
 - `schema.sql` — applications tablisa, statuslar we HR/admin RLS;
-- `storage.sql` — private `candidate-cvs` bucket, diňe HR/admin read/delete;
-- `portal_accounts.sql` — kandidat/iş beriji profilleri, `owner_id`, Auth trigger we own-data RLS;
+- `storage.sql` — private `candidate-cvs` bucket;
+- `portal_accounts.sql` — portal profilleri, `owner_id`, kandidat reusable anketa/CV metadata we own-data RLS;
 - `hr_activity.sql` — HR bellikleri we audit timeline;
 - `notifications.sql` — Telegram/e-poçta delivery log;
-- `abuse_protection.sql` — hash rate-limit synanyşyk log-y;
+- `abuse_protection.sql` — hash rate-limit log-y;
 - `assign_admin_role.sql` — Auth ulanyjysyna `admin` ýa-da `hr` roly.
 
-`schema.sql` we `storage.sql` public direct INSERT/upload rugsatlaryny aýyrýar. Production ýazgylary diňe Edge Function tarapyndan döredilýär.
+Täzelenen `portal_accounts.sql` öň işledilen proýektde hem `add column if not exists` arkaly kandidat profil meýdanlaryny goşýar.
 
 ## 3. Frontend maglumatlary
 
@@ -48,6 +48,8 @@ GitHub Actions repository secrets:
 ```text
 VITE_SUPABASE_URL
 VITE_SUPABASE_PUBLISHABLE_KEY
+SUPABASE_ACCESS_TOKEN
+SUPABASE_PROJECT_ID
 ```
 
 Repository variables:
@@ -57,7 +59,7 @@ VITE_TURNSTILE_SITE_KEY
 VITE_ENABLE_LOCAL_ADMIN_MIRROR=false
 ```
 
-Turnstile site key public bolýar. Turnstile secret, service role, Telegram tokeni ýa-da Resend key frontend-e goýulmaýar.
+Private açarlar frontend-e goýulmaýar.
 
 ## 4. Kandidat we iş beriji kabinetleri
 
@@ -67,7 +69,7 @@ Doly görkezme:
 docs/PORTAL_SETUP.md
 ```
 
-Supabase Dashboard → Authentication → URL Configuration:
+Authentication → URL Configuration:
 
 ```text
 Site URL:
@@ -82,11 +84,36 @@ Kabinet:
 
 - `#/portal` arkaly açylýar;
 - `candidate` we `employer` hasaplaryny döredýär;
-- öz profilini we diňe `owner_id = auth.uid()` bolan arzalary görkezýär;
-- girişli ulanyjynyň täze formasyny Edge Function arkaly hasabyna baglaýar;
-- guest arzalary `owner_id = null` ýagdaýynda kabul edýär.
+- diňe öz profilini we `owner_id = auth.uid()` bolan arzalary görkezýär;
+- girişli ulanyjynyň täze formasyny hasabyna baglaýar;
+- kandidat anketasyny we esasy CV-ni gaýtadan ulanýar.
 
-## 5. Turnstile we rate-limit
+## 5. Reusable kandidat anketa we CV
+
+`portal_profiles` içinde:
+
+```text
+candidate_role
+candidate_experience_key
+candidate_languages
+candidate_salary
+candidate_message
+candidate_cv_metadata
+```
+
+saklanýar.
+
+`portal-profile` Edge Function:
+
+- portal JWT-ni barlaýar;
+- diňe kandidat hasabyna rugsat berýär;
+- CV-ni `candidate-cvs/profiles/<user-id>/...` ýoluna upload edýär;
+- replace/delete lifecycle-y dolandyrýar;
+- browser-e service role ýa-da direct Storage upload rugsady bermeýär.
+
+Public kandidat formasy portal sessiýasyny tapsa anketa maglumatlaryny boş meýdanlara doldurýar. Kabinetdäki CV saýlansa `submit-application` ony `candidate-cvs/applications/<application-id>/...` ýoluna aýratyn copy edýär.
+
+## 6. Turnstile we rate-limit
 
 Doly görkezme:
 
@@ -105,13 +132,9 @@ IP_LIMIT_PER_HOUR
 CONTACT_LIMIT_PER_DAY
 ```
 
-Production forma akymy:
+`ALLOWED_SITE_ORIGINS` hem `portal-profile`, hem `submit-application` tarapyndan ulanylýar.
 
-```text
-Optional portal JWT → Turnstile → Siteverify → hash rate-limit → private CV upload → applications INSERT
-```
-
-## 6. CV Storage
+## 7. CV Storage
 
 Doly görkezme:
 
@@ -119,44 +142,34 @@ Doly görkezme:
 docs/CV_STORAGE_SETUP.md
 ```
 
-Kandidat CV-si:
-
 ```text
-candidate-cvs/applications/<application-id>/<random-id>.<ext>
+Profil CV:      candidate-cvs/profiles/<user-id>/<random-id>.<ext>
+Application CV: candidate-cvs/applications/<application-id>/<random-id>.<ext>
 ```
 
-ýoluna service role arkaly ýüklenýär. DB INSERT şowsuz bolsa faýl yzyna pozulýar. HR/admin private JWT bilen download/delete edýär.
+Application profil CV-niň özbaşdak private nusgasyny alýar.
 
-## 7. Admin Auth
-
-Doly görkezme:
+## 8. Admin Auth
 
 ```text
 docs/ADMIN_AUTH_SETUP.md
 ```
 
-1. Authentication → Users bölüminde admin ulanyjysyny dörediň.
-2. `assign_admin_role.sql` içindäki e-poçtany we roly üýtgediň.
-3. SQL-ni işlediň.
-4. Ulanyjy çykyp, täzeden giriş etsin.
+Admin rugsady `app_metadata.role`, portal görnüşi bolsa `portal_profiles.account_type` arkaly saklanýar.
 
-Admin/HR hasaby portal hasabyndan aýratyn roldur. Admin rugsady `app_metadata.role`, portal görnüşi bolsa `portal_profiles.account_type` arkaly saklanýar.
-
-## 8. HR bellikleri we audit
+## 9. HR bellikleri we audit
 
 ```text
 docs/HR_ACTIVITY_SETUP.md
 ```
 
-Remote admin panelde bellik, status taryhy, awtor, rol we wagt görkezilýär. Public we portal ulanyjylary içerki HR maglumatlaryny okap bilmeýär.
+Public we portal ulanyjylary içerki HR maglumatlaryny okap bilmeýär.
 
-## 9. Telegram we e-poçta
+## 10. Telegram we e-poçta
 
 ```text
 docs/NOTIFICATIONS_SETUP.md
 ```
-
-Akym:
 
 ```text
 application_events INSERT
@@ -168,12 +181,13 @@ notify-hr Edge Function
 Telegram + Resend
 ```
 
-## 10. Edge Functions deployment
+## 11. Edge Functions deployment
 
 Function-lar:
 
 ```text
 submit-application
+portal-profile
 notify-hr
 ```
 
@@ -181,54 +195,43 @@ CLI:
 
 ```bash
 supabase functions deploy submit-application --project-ref YOUR_PROJECT_REF
+supabase functions deploy portal-profile --project-ref YOUR_PROJECT_REF
 supabase functions deploy notify-hr --project-ref YOUR_PROJECT_REF
 ```
 
-Ýa-da GitHub Actions-daky manual `Deploy Supabase Functions` workflow-y ulanyň.
+Ýa-da GitHub Actions-daky manual `Deploy Supabase Functions` workflow-y üç function-y hem deploy edýär.
 
-Gerekli GitHub secrets:
+Täzelenen kandidat profil tapgyry üçin `portal-profile` ilkinji gezek, `submit-application` bolsa täzeden deploy edilmeli.
 
-```text
-SUPABASE_ACCESS_TOKEN
-SUPABASE_PROJECT_ID
-```
-
-`portal_accounts.sql` goşulandan soň `submit-application` täzeden deploy edilmeli, sebäbi ol portal JWT-ni we account type maglumatyny barlaýar.
-
-## 11. Režimler
+## 12. Režimler
 
 ### Supabase sazlanmadyk bolsa
 
 - formalar localStorage-a ýazylýar;
 - `#/admin` lokal demo panelini açýar;
 - `#/portal` konfigurasiýa habaryny görkezýär;
-- CV-niň diňe metadata-sy saklanýar;
-- Turnstile, remote admin, kabinet, audit we habarnamalar işlemeýär.
+- reusable kandidat anketa/CV, Turnstile, remote admin, audit we habarnamalar işlemeýär.
 
 ### Supabase sazlanan bolsa
 
-- public forma diňe Turnstile site key hem sazlanan ýagdaýynda açyk bolýar;
-- arza `submit-application` Edge Function arkaly geçýär;
-- girişli portal ulanyjynyň JWT-si serverde täzeden barlanýar;
-- rate-limit we server-side Siteverify hökmany;
-- CV private Storage-a ýüklenýär;
-- `#/portal` öz profilini we öz arzalaryny görkezýär;
-- `#/admin` Supabase Auth, app role we RLS bilen goralýar;
-- audit we notification delivery taryhy görünýär.
+- public forma Turnstile bilen goralýar;
+- arza `submit-application` arkaly geçýär;
+- kandidat anketa/CV `portal-profile` arkaly dolandyrylýar;
+- girişli kandidat üçin autofill we profile CV copy işleýär;
+- CV private Storage-da saklanýar;
+- admin panel Auth, app role we RLS bilen goralýar.
 
-## 12. Barlaýyş
+## 13. Barlaýyş
 
 1. SQL faýllaryny görkezilen tertipde işlediň.
 2. Auth Site URL we Redirect URLs sazlaň.
-3. Cloudflare Turnstile widget dörediň.
-4. Frontend site key we Supabase maglumatlaryny GitHub-a goşuň.
-5. Edge Function secret-laryny Supabase-a goşuň.
-6. Iki Edge Function-y deploy ediň.
-7. Kandidat we iş beriji portal hasaplaryny dörediň.
-8. Kabinet sessiýasy açyk wagty degişli formalary iberiň.
-9. `applications.owner_id` we own-data RLS-i barlaň.
-10. Admin hasaby we rol dörediň.
-11. Notification Database Webhook dörediň.
-12. `submission_attempts` içinde raw IP/contact ýokdugyny barlaň.
-13. Public direct applications INSERT we Storage upload synanyşyklarynyň ret edilýändigini barlaň.
-14. Admin panelde CV, bellik, taryh we delivery statuslaryny barlaň.
+3. Frontend maglumatlaryny GitHub-a goşuň.
+4. Edge Function secret-laryny Supabase-a goşuň.
+5. Üç Edge Function-y deploy ediň.
+6. Kandidat hasaby bilen giriş ediň.
+7. Kandidat anketasyny dolduryň we CV goşuň.
+8. Public formadaky autofill-i barlaň.
+9. Profil CV bilen arza iberiň.
+10. Profil we application Storage ýollarynyň aýrydygyny barlaň.
+11. Application `owner_id`, `cv_metadata.source` we RLS-i barlaň.
+12. Admin panelde CV, bellik, taryh we delivery statuslaryny barlaň.
