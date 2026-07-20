@@ -10,7 +10,9 @@ import Footer from './components/Footer.jsx'
 import Header from './components/Header.jsx'
 import HeroSection from './components/HeroSection.jsx'
 import JobsSection from './components/JobsSection.jsx'
+import PortalCallbackPage from './components/PortalCallbackPage.jsx'
 import PortalPage from './components/PortalPage.jsx'
+import PortalRecoveryPage from './components/PortalRecoveryPage.jsx'
 import ProcessSection from './components/ProcessSection.jsx'
 import ServicesSection from './components/ServicesSection.jsx'
 import { companyCopy } from './data/companyContent.js'
@@ -26,6 +28,7 @@ function App() {
   const [route, setRoute] = useState(() => window.location.hash)
   const t = useMemo(() => ({ ...copy[lang], ...companyCopy[lang] }), [lang])
   const backendMode = getApplicationBackendMode()
+  const portalFlow = new URLSearchParams(window.location.search).get('portal') || ''
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -37,9 +40,7 @@ function App() {
         setAudience(hash === '#apply-candidate' ? 'candidate' : 'employer')
         setSelectedRole('')
         setSubmitted(false)
-        window.setTimeout(() => {
-          document.getElementById('apply')?.scrollIntoView({ behavior: 'smooth' })
-        }, 0)
+        window.setTimeout(() => document.getElementById('apply')?.scrollIntoView({ behavior: 'smooth' }), 0)
       }
     }
 
@@ -61,6 +62,14 @@ function App() {
     return result
   }
 
+  if (portalFlow === 'recovery') {
+    return <PortalRecoveryPage lang={lang} setLang={setLang} />
+  }
+
+  if (portalFlow === 'callback') {
+    return <PortalCallbackPage lang={lang} setLang={setLang} />
+  }
+
   if (route === '#/admin') {
     return backendMode === 'supabase'
       ? <AdminPortal lang={lang} setLang={setLang} />
@@ -73,15 +82,7 @@ function App() {
 
   return (
     <div className="site-shell">
-      <Header
-        t={t}
-        lang={lang}
-        menuOpen={menuOpen}
-        setLang={setLang}
-        setMenuOpen={setMenuOpen}
-        scrollToForm={scrollToForm}
-      />
-
+      <Header t={t} lang={lang} menuOpen={menuOpen} setLang={setLang} setMenuOpen={setMenuOpen} scrollToForm={scrollToForm} />
       <main>
         <HeroSection t={t} scrollToForm={scrollToForm} />
         <ServicesSection t={t} />
@@ -89,20 +90,13 @@ function App() {
         <AboutSection t={t} />
         <ProcessSection t={t} />
         <ApplicationSection
-          t={t}
-          lang={lang}
-          audience={audience}
-          setAudience={setAudience}
-          submitted={submitted}
-          setSubmitted={setSubmitted}
-          selectedRole={selectedRole}
-          handleSubmit={handleSubmit}
-          backendMode={backendMode}
+          t={t} lang={lang} audience={audience} setAudience={setAudience}
+          submitted={submitted} setSubmitted={setSubmitted} selectedRole={selectedRole}
+          handleSubmit={handleSubmit} backendMode={backendMode}
         />
         <ContactSection t={t} scrollToForm={scrollToForm} />
         <FinalCta t={t} scrollToForm={scrollToForm} />
       </main>
-
       <Footer t={t} lang={lang} />
     </div>
   )
