@@ -14,6 +14,9 @@ export default function Header({ t, lang, menuOpen, setLang, setMenuOpen, scroll
         <a href="#about" onClick={() => setMenuOpen(false)}>{t.nav[2]}</a>
         <a href="#process" onClick={() => setMenuOpen(false)}>{t.nav[3]}</a>
         <a href="#contact" onClick={() => setMenuOpen(false)}>{t.nav[4]}</a>
+        <a className="portal-nav-link" href="#/portal" onClick={() => setMenuOpen(false)}>
+          {lang === 'tm' ? 'Şahsy kabinet' : 'Личный кабинет'}
+        </a>
       </nav>
 
       <div className="header-actions">
