@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react'
 import { backendConfig } from '../config/backend.js'
 import { fetchPortalData, updatePortalProfile } from '../services/portalDataService.js'
 import {
+  changePortalEmail,
+  changePortalPassword,
   getValidPortalSession,
+  requestPortalPasswordReset,
+  requestPortalReauthentication,
   signInPortal,
   signOutPortal,
   signUpPortal,
@@ -31,6 +35,7 @@ export default function PortalPage({ lang, setLang }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [confirmationRequired, setConfirmationRequired] = useState(false)
+  const [resetRequested, setResetRequested] = useState(false)
 
   const loadPortalData = async (activeSession) => {
     const data = await fetchPortalData(activeSession.accessToken, activeSession.user.id)
@@ -68,6 +73,7 @@ export default function PortalPage({ lang, setLang }) {
     setBusy(true)
     setError('')
     setConfirmationRequired(false)
+    setResetRequested(false)
 
     try {
       const nextSession = await signInPortal(email.trim(), password)
@@ -84,6 +90,7 @@ export default function PortalPage({ lang, setLang }) {
     setBusy(true)
     setError('')
     setConfirmationRequired(false)
+    setResetRequested(false)
 
     try {
       const result = await signUpPortal({
@@ -101,6 +108,22 @@ export default function PortalPage({ lang, setLang }) {
       }
     } catch (registerError) {
       setError(registerError instanceof Error ? registerError.message : 'Portal registration failed.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const requestReset = async (email) => {
+    setBusy(true)
+    setError('')
+    setConfirmationRequired(false)
+    setResetRequested(false)
+
+    try {
+      await requestPortalPasswordReset(email.trim())
+      setResetRequested(true)
+    } catch (resetError) {
+      setError(resetError instanceof Error ? resetError.message : 'Password reset email could not be sent.')
     } finally {
       setBusy(false)
     }
@@ -147,6 +170,61 @@ export default function PortalPage({ lang, setLang }) {
     }
   }
 
+  const updatePassword = async (details) => {
+    setBusy(true)
+    setError('')
+
+    try {
+      const activeSession = await getValidPortalSession()
+      if (!activeSession) throw new Error('Portal session expired. Log in again.')
+      const result = await changePortalPassword(activeSession, details)
+      setSession(result.session)
+      return result
+    } catch (updateError) {
+      const message = updateError instanceof Error ? updateError.message : 'Password could not be updated.'
+      setError(message)
+      throw new Error(message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const sendNonce = async () => {
+    setBusy(true)
+    setError('')
+
+    try {
+      const activeSession = await getValidPortalSession()
+      if (!activeSession) throw new Error('Portal session expired. Log in again.')
+      await requestPortalReauthentication(activeSession)
+    } catch (nonceError) {
+      const message = nonceError instanceof Error ? nonceError.message : 'Security code could not be sent.'
+      setError(message)
+      throw new Error(message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const updateEmail = async (details) => {
+    setBusy(true)
+    setError('')
+
+    try {
+      const activeSession = await getValidPortalSession()
+      if (!activeSession) throw new Error('Portal session expired. Log in again.')
+      const result = await changePortalEmail(activeSession, details)
+      setSession(result.session)
+      return result
+    } catch (emailError) {
+      const message = emailError instanceof Error ? emailError.message : 'Email could not be updated.'
+      setError(message)
+      throw new Error(message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const logout = async () => {
     await signOutPortal(session)
     setSession(null)
@@ -154,6 +232,7 @@ export default function PortalPage({ lang, setLang }) {
     setApplications([])
     setError('')
     setConfirmationRequired(false)
+    setResetRequested(false)
   }
 
   if (booting) return <div className="portal-loading">IDEGLI / PORTAL</div>
@@ -165,12 +244,8 @@ export default function PortalPage({ lang, setLang }) {
         <div className="portal-unavailable-card">
           <a className="portal-brand" href="#top"><span>I</span><strong>IDEGLI</strong></a>
           <span>PORTAL / CONFIG</span>
-          <h1>{t.title}</h1>
-          <p>{t.text}</p>
-          <div>
-            <button type="button" onClick={() => setLang(lang === 'tm' ? 'ru' : 'tm')}>{t.language}</button>
-            <a href="#top">← {t.back}</a>
-          </div>
+          <h1>{t.title}</h1><p>{t.text}</p>
+          <div><button type="button" onClick={() => setLang(lang === 'tm' ? 'ru' : 'tm')}>{t.language}</button><a href="#top">← {t.back}</a></div>
         </div>
       </main>
     )
@@ -183,9 +258,11 @@ export default function PortalPage({ lang, setLang }) {
         setLang={setLang}
         onLogin={login}
         onRegister={register}
+        onRequestReset={requestReset}
         busy={busy}
         error={error}
         confirmationRequired={confirmationRequired}
+        resetRequested={resetRequested}
       />
     )
   }
@@ -201,6 +278,9 @@ export default function PortalPage({ lang, setLang }) {
       error={error}
       onRefresh={refresh}
       onSaveProfile={saveProfile}
+      onChangePassword={updatePassword}
+      onSendNonce={sendNonce}
+      onChangeEmail={updateEmail}
       onLogout={logout}
     />
   )
