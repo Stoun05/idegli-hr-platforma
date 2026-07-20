@@ -20,6 +20,18 @@ async function parseFailure(response, fallback) {
   }
 }
 
+function safeCandidateCv(cv) {
+  if (!cv || typeof cv !== 'object') return null
+
+  return {
+    name: cv.name || 'candidate-cv',
+    size: Number(cv.size || 0),
+    type: cv.type || '',
+    uploadedAt: cv.uploadedAt || '',
+    source: 'candidate-profile',
+  }
+}
+
 export function normalizePortalProfile(row) {
   return {
     id: row.id,
@@ -34,7 +46,7 @@ export function normalizePortalProfile(row) {
       languages: row.candidate_languages || '',
       salary: row.candidate_salary || '',
       message: row.candidate_message || '',
-      cv: row.candidate_cv_metadata || null,
+      cv: safeCandidateCv(row.candidate_cv_metadata),
     },
     createdAt: row.created_at,
     updatedAt: row.updated_at,
