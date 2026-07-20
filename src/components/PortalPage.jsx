@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { backendConfig } from '../config/backend.js'
+import { deleteCandidateProfileCv, saveCandidateProfile } from '../services/candidateProfileService.js'
 import { fetchPortalData, updatePortalProfile } from '../services/portalDataService.js'
 import {
   changePortalEmail,
@@ -170,6 +171,46 @@ export default function PortalPage({ lang, setLang }) {
     }
   }
 
+  const saveCandidate = async (fields, cvFile) => {
+    setBusy(true)
+    setError('')
+
+    try {
+      const activeSession = await getValidPortalSession()
+      if (!activeSession) throw new Error('Portal session expired. Log in again.')
+      const candidateProfile = await saveCandidateProfile(activeSession, fields, cvFile)
+      setSession(activeSession)
+      setProfile((current) => ({ ...current, candidateProfile }))
+      return candidateProfile
+    } catch (saveError) {
+      const message = saveError instanceof Error ? saveError.message : 'Candidate profile could not be saved.'
+      setError(message)
+      throw new Error(message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const removeCandidateCv = async () => {
+    setBusy(true)
+    setError('')
+
+    try {
+      const activeSession = await getValidPortalSession()
+      if (!activeSession) throw new Error('Portal session expired. Log in again.')
+      const candidateProfile = await deleteCandidateProfileCv(activeSession)
+      setSession(activeSession)
+      setProfile((current) => ({ ...current, candidateProfile }))
+      return candidateProfile
+    } catch (deleteError) {
+      const message = deleteError instanceof Error ? deleteError.message : 'Candidate CV could not be removed.'
+      setError(message)
+      throw new Error(message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const updatePassword = async (details) => {
     setBusy(true)
     setError('')
@@ -278,6 +319,8 @@ export default function PortalPage({ lang, setLang }) {
       error={error}
       onRefresh={refresh}
       onSaveProfile={saveProfile}
+      onSaveCandidateProfile={saveCandidate}
+      onDeleteCandidateCv={removeCandidateCv}
       onChangePassword={updatePassword}
       onSendNonce={sendNonce}
       onChangeEmail={updateEmail}
