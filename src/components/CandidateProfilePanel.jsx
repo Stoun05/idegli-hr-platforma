@@ -56,7 +56,6 @@ export default function CandidateProfilePanel({ lang, profile, busy, onSave, onD
   useEffect(() => {
     setForm(profile || {})
     setCvFile(null)
-    setSaved(false)
     setError('')
     if (fileRef.current) fileRef.current.value = ''
   }, [profile])
