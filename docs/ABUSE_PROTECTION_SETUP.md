@@ -1,6 +1,6 @@
 # IDEGLI Turnstile we rate-limit goragy
 
-Bu tapgyr public kandidat we iş beriji formalaryny göni PostgreSQL/Storage-a ibermekden aýyrýar. Ähli production arzalary `submit-application` Supabase Edge Function arkaly geçýär.
+Ähli public production arzalary `submit-application` Supabase Edge Function arkaly geçýär.
 
 ## Gorag akymy
 
@@ -15,10 +15,12 @@ Server-side Siteverify
     ↓
 IP/contact hash rate-limit
     ↓
-Private CV upload + applications INSERT
+Täze CV upload ýa-da profil CV copy
+    ↓
+Private applications INSERT
 ```
 
-## 1. Cloudflare Turnstile widget döretmek
+## 1. Cloudflare Turnstile widget
 
 Cloudflare Dashboard → Turnstile → Add widget:
 
@@ -27,13 +29,10 @@ Widget name: IDEGLI application forms
 Widget mode: Managed
 Hostnames:
 - stoun05.github.io
-- localhost          # diňe lokal test üçin
+- localhost
 ```
 
-Iki açar berilýär:
-
-- Site key — public, frontendde ulanylýar;
-- Secret key — private, diňe Supabase Edge Function secrets-de saklanýar.
+Site key public, Secret key bolsa diňe Supabase Edge Function secrets-de saklanýar.
 
 ## 2. GitHub Pages site key
 
@@ -43,36 +42,33 @@ GitHub repository → Settings → Secrets and variables → Actions → Variabl
 VITE_TURNSTILE_SITE_KEY=<PUBLIC_SITE_KEY>
 ```
 
-Bu secret däl; widget site key brauzerde görünýär. Secret key-ni GitHub Pages ýa-da `VITE_*` üýtgeýjisine goýmaň.
-
 Lokal `.env`:
 
 ```env
 VITE_TURNSTILE_SITE_KEY=YOUR_PUBLIC_SITE_KEY
 ```
 
+Secret key-ni `VITE_*` üýtgeýjisine goýmaň.
+
 ## 3. SQL migration
 
-Supabase SQL Editor-de esasy SQL faýllaryndan soň işlediň:
-
 ```text
+supabase/schema.sql
+supabase/storage.sql
+supabase/portal_accounts.sql
 supabase/abuse_protection.sql
 ```
 
-Bu faýl:
+`abuse_protection.sql`:
 
 - `submission_attempts` tablisany döredýär;
 - raw IP, e-poçta ýa-da telefon saklamaýar;
-- IP we kontakt üçin server-only pepper bilen SHA-256 hash saklaýar;
-- outcome hökmünde `accepted`, `captcha_failed`, `rate_limited`, `validation_failed`, `server_failed` ulanýar;
-- diňe `admin` roluna anti-abuse log-y okatýar;
-- 30 günden köne ýazgylary arassalamak üçin `cleanup_submission_attempts()` funksiýasyny döredýär.
-
-Täzelenen `schema.sql` we `storage.sql` hem gaýtadan işledilmeli. Olar public direct INSERT/upload syýasatlaryny aýyrýar; täze ýazgylar diňe Edge Function service role arkaly döredilýär.
+- server-only pepper bilen SHA-256 hash saklaýar;
+- `accepted`, `captcha_failed`, `rate_limited`, `validation_failed`, `server_failed` outcome-laryny ulanýar;
+- diňe admin roluna anti-abuse log-y okatýar;
+- köne ýazgylary arassalamak üçin `cleanup_submission_attempts()` döredýär.
 
 ## 4. Edge Function secret-lary
-
-Supabase Edge Functions → Secrets:
 
 ```text
 TURNSTILE_SECRET_KEY=YOUR_PRIVATE_SECRET_KEY
@@ -83,9 +79,9 @@ IP_LIMIT_PER_HOUR=8
 CONTACT_LIMIT_PER_DAY=3
 ```
 
-`RATE_LIMIT_PEPPER` uzyn we tötänleýin bolmaly. Ony üýtgetmek öňki hash ýazgylary bilen täze ýazgylaryň deňeşdirilmegini bes eder.
+`ALLOWED_SITE_ORIGINS` həm `submit-application`, həm `portal-profile` tarapyndan ulanylýar.
 
-Production-da localhost bahalaryny aýyrmak bolýar:
+Production:
 
 ```text
 ALLOWED_SITE_ORIGINS=https://stoun05.github.io
@@ -94,33 +90,30 @@ TURNSTILE_ALLOWED_HOSTNAMES=stoun05.github.io
 
 ## 5. Edge Function deployment
 
-CLI:
-
 ```bash
 supabase functions deploy submit-application --project-ref YOUR_PROJECT_REF
+supabase functions deploy portal-profile --project-ref YOUR_PROJECT_REF
+supabase functions deploy notify-hr --project-ref YOUR_PROJECT_REF
 ```
 
-Ýa-da GitHub → Actions → `Deploy Supabase Functions` → `Run workflow`.
-
-Workflow iki function-y hem deploy edýär:
+GitHub → Actions → `Deploy Supabase Functions` workflow-y üç function-y hem deploy edýär:
 
 ```text
 submit-application
+portal-profile
 notify-hr
 ```
 
-## 6. Rate-limit düzgünleri
+`portal-profile` Turnstile ulanmaýar; ol authenticated JWT we candidate account type bilen goralýar. `submit-application` bolsa Turnstile we rate-limit barlaglaryny hökmany geçirýär.
 
-Default çäkler:
+## 6. Rate-limit düzgünleri
 
 ```text
 Bir IP:       8 synanyşyk / 1 sagat
 Bir kontakt:  3 synanyşyk / 24 sagat
 ```
 
-Kontakt hash-i normalizirlenen e-poçta + telefon kombinasiýasyndan döredilýär. Raw bahalar anti-abuse tablisada saklanmaýar.
-
-Çäkden geçilende endpoint:
+Çäkden geçilende:
 
 ```text
 HTTP 429
@@ -128,55 +121,54 @@ Retry-After: 3600
 code: rate_limited
 ```
 
-jogabyny berýär. Frontend ulanyja bir sagatdan soň täzeden synanyşmagy aýdýar.
+jogaby berilýär.
 
 ## 7. Turnstile token düzgünleri
 
-Widget `action: idegli_application` bilen render edilýär. Edge Function Siteverify jogabynda:
+Widget `action: idegli_application` bilen render edilýär. Edge Function:
 
 - `success=true`;
 - `action=idegli_application`;
 - rugsat edilen hostname
 
-barlaglaryny geçirýär.
-
-Token her iberişden soň reset edilýär. Möhleti gutaran ýa-da öň ulanylan token täzeden kabul edilmeýär.
+barlaglaryny geçirýär. Token her iberişden soň reset edilýär.
 
 ## 8. CV akymy
 
-Kandidat formasynda:
+Täze CV saýlanan bolsa:
 
-1. Turnstile serverde tassyklanýar.
+1. Turnstile tassyklanýar.
 2. Rate-limit barlanýar.
-3. CV service role arkaly private `candidate-cvs/applications/<application-id>/...` ýoluna ýüklenýär.
+3. CV `candidate-cvs/applications/<application-id>/...` ýoluna upload edilýär.
 4. Arza PostgreSQL-e ýazylýar.
-5. DB INSERT şowsuz bolsa CV awtomatik pozulýar.
+5. INSERT şowsuz bolsa CV pozulýar.
+
+Kabinetdäki profil CV saýlanan bolsa:
+
+1. Portal JWT we candidate account type barlanýar.
+2. Database-däki profil CV ýolunyň user ID prefiksi barlanýar.
+3. CV application ýoluna server-side copy edilýär.
+4. INSERT şowsuz bolsa nusga pozulýar.
 
 Public ulanyjy Storage-a göni upload edip bilmeýär.
 
 ## 9. Periodik arassalama
 
-SQL Editor-den el bilen:
-
 ```sql
 select public.cleanup_submission_attempts(30);
 ```
 
-Production-da Supabase Cron arkaly her gün işletmek maslahat berilýär. Funksiýa 1–365 gün retention kabul edýär.
+Production-da Supabase Cron arkaly her gün işletmek maslahat berilýär.
 
 ## 10. Test
 
-Cloudflare-nyň resmi test site/secret key-laryny staging ýa-da lokal test üçin ulanyň. Production secret bilen test tokeni, test secret bilen production tokeni kabul edilmeýär.
-
-Barlaýyş:
-
-1. `schema.sql`, `storage.sql`, `abuse_protection.sql` işlediň.
+1. SQL faýllaryny işlediň.
 2. Function secret-laryny goşuň.
-3. `submit-application` deploy ediň.
+3. Üç function-y deploy ediň.
 4. GitHub variable hökmünde site key goşuň.
-5. GitHub Pages deployment tamamlanandan soň formany açyň.
-6. Turnstile tamamlanmazdan iberişiň saklanýandygyny barlaň.
-7. Dogry token bilen kandidat we iş beriji arzalaryny barlaň.
-8. `submission_attempts` tablisada diňe hash maglumatlarynyň bardygyny barlaň.
-9. Çäkden geçip HTTP 429 we frontend habaryny barlaň.
-10. Public REST arkaly `applications` INSERT we Storage upload synanyşygynyň RLS/grant sebäpli ret edilýändigini barlaň.
+5. Turnstile tamamlanmazdan public forma iberişiniň saklanýandygyny barlaň.
+6. Dogry token bilen kandidat we iş beriji arzalaryny barlaň.
+7. Girişli kandidat üçin profile CV copy akymyny barlaň.
+8. `submission_attempts` içinde diňe hash maglumatlarynyň bardygyny barlaň.
+9. HTTP 429 jogabyny barlaň.
+10. Public direct applications INSERT we Storage upload synanyşyklarynyň ret edilýändigini barlaň.
