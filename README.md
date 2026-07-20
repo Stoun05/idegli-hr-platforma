@@ -24,7 +24,22 @@ IDEGLI üçin işgär saýlap-seçiş, Executive Search, karýera konsultasiýas
 - server-side Siteverify;
 - IP/contact hash rate-limit;
 - production-da diňe Supabase Edge Function arkaly arza kabul etmek;
+- girişli portal ulanyjysynyň täze arzasyny öz kabinetine baglamak;
 - Supabase sazlanmasa localStorage demo fallback.
+
+### Kandidat we iş beriji şahsy kabinetleri
+
+- `#/portal` arkaly aýratyn giriş we registrasiýa;
+- kandidat ýa-da iş beriji hasap görnüşi;
+- email/password Supabase Auth;
+- e-poçta tassyklama ýagdaýy;
+- access token refresh we aýratyn portal sessiýasy;
+- öz profilini görmek we redaktirlemek;
+- diňe öz `owner_id` ýazgylaryny görmek;
+- ähli arzalaryň we aktiw prosesleriň sany;
+- status, iberilen wagt, soňky täzelenme we forma maglumatlary;
+- täze arza üçin degişli kandidat ýa-da iş beriji formasyna geçmek;
+- RLS arkaly başga ulanyjynyň maglumatyndan izolýasiýa.
 
 ### Admin paneli
 
@@ -57,6 +72,12 @@ Saýt:
 https://stoun05.github.io/idegli-hr-platforma/
 ```
 
+Şahsy kabinet:
+
+```text
+https://stoun05.github.io/idegli-hr-platforma/#/portal
+```
+
 Admin paneli:
 
 ```text
@@ -73,7 +94,8 @@ Supabase frontend maglumatlary ýok bolsa:
 - maglumat diňe şol brauzerde görünýär;
 - CV-niň diňe metadata-sy saklanýar;
 - `#/admin` lokal demo panelini açýar;
-- remote audit, Turnstile we habarnamalar işlemeýär.
+- `#/portal` konfigurasiýa habaryny görkezýär;
+- remote audit, Turnstile, kabinet we habarnamalar işlemeýär.
 
 ### Supabase production
 
@@ -84,18 +106,20 @@ VITE_TURNSTILE_SITE_KEY=YOUR_PUBLIC_SITE_KEY
 VITE_ENABLE_LOCAL_ADMIN_MIRROR=false
 ```
 
-Production akymy:
+Production arza akymy:
 
 ```text
 React formasy
+    ↓
+Portal JWT — giriş edilen bolsa
     ↓
 Cloudflare Turnstile
     ↓
 submit-application Edge Function
     ↓
-Siteverify + hash rate-limit
+JWT/profile + Siteverify + hash rate-limit
     ↓
-Private CV Storage + PostgreSQL
+Private CV Storage + PostgreSQL owner_id
     ↓
 Audit event + HR notification
 ```
@@ -109,6 +133,7 @@ Public ulanyja `applications` tablisasynda INSERT ýa-da `candidate-cvs` bucket-
 ```text
 supabase/schema.sql
 supabase/storage.sql
+supabase/portal_accounts.sql
 supabase/hr_activity.sql
 supabase/notifications.sql
 supabase/abuse_protection.sql
@@ -158,6 +183,17 @@ VITE_TURNSTILE_SITE_KEY
 VITE_ENABLE_LOCAL_ADMIN_MIRROR=false
 ```
 
+## Portal howpsuzlygy
+
+- `portal_profiles.id = auth.users.id`;
+- `account_type` diňe `candidate` ýa-da `employer`;
+- hasap görnüşi profil döredilenden soň frontend tarapyndan üýtgedilmeýär;
+- öz profilini diňe `auth.uid() = id` bolan ulanyjy görýär;
+- öz arzalaryny diňe `applications.owner_id = auth.uid()` bolan ulanyjy görýär;
+- kandidat hasaby diňe kandidat formasyny, iş beriji hasaby diňe iş beriji formasyny öz kabinetine baglap biler;
+- guest arzalar `owner_id = null` bolup galýar;
+- portal we admin sessiýalary dürli localStorage key-lerinde saklanýar.
+
 ## Turnstile we rate-limit
 
 Default çäkler:
@@ -182,6 +218,7 @@ Turnstile widget:
 ```text
 docs/SUPABASE_SETUP.md
 docs/ADMIN_AUTH_SETUP.md
+docs/PORTAL_SETUP.md
 docs/CV_STORAGE_SETUP.md
 docs/HR_ACTIVITY_SETUP.md
 docs/NOTIFICATIONS_SETUP.md
@@ -221,6 +258,7 @@ src/
 docs/
 ├── SUPABASE_SETUP.md
 ├── ADMIN_AUTH_SETUP.md
+├── PORTAL_SETUP.md
 ├── CV_STORAGE_SETUP.md
 ├── HR_ACTIVITY_SETUP.md
 ├── NOTIFICATIONS_SETUP.md
@@ -230,6 +268,7 @@ supabase/
 ├── config.toml
 ├── schema.sql
 ├── storage.sql
+├── portal_accounts.sql
 ├── hr_activity.sql
 ├── notifications.sql
 ├── abuse_protection.sql
@@ -256,22 +295,23 @@ supabase/
 11. HR bellikleri we audit timeline
 12. Telegram/e-poçta Edge Function habarnamalary
 13. Cloudflare Turnstile, server-side Siteverify we privacy-preserving rate-limit
+14. Kandidat we iş beriji şahsy kabinetleri, profil RLS we owner-linked arzalar
 
-## 13-nji tapgyrda goşulanlar
+## 14-nji tapgyrda goşulanlar
 
-- explicit Cloudflare Turnstile React komponenti;
-- public Turnstile site key konfigurasiýasy;
-- `submit-application` Edge Function;
-- mandatory Siteverify, action we hostname barlagy;
-- CORS origin allowlist;
-- `submission_attempts` anti-abuse tablisa;
-- IP sagatlyk we kontakt günlük çäkleri;
-- raw maglumat saklamazdan SHA-256 + pepper hash;
-- HTTP 429 we `Retry-After` jogaby;
-- service-role CV upload we DB insert rollback;
-- public direct applications INSERT we Storage upload rugsatlarynyň aýrylmagy;
-- iki Edge Function-y deploy edýän GitHub workflow;
-- Turnstile/rate-limit sazlama dokumentasiýasy.
+- `portal_profiles` tablisa we Auth trigger;
+- `applications.owner_id`;
+- kandidat/iş beriji registrasiýasy we login;
+- e-poçta tassyklama ýagdaýy;
+- portal access/refresh token sessiýasy;
+- kandidat we iş beriji dashboard-y;
+- profil redaktirlemesi;
+- diňe öz arzalaryny görkezýän RLS;
+- portal JWT-ni `submit-application` function-a geçirmek;
+- serwerde JWT we account type barlagy;
+- täze arzany portal hasabyna awtomatik baglamak;
+- baş sahypa header/footer kabinet salgylanmalary;
+- portal setup dokumentasiýasy.
 
 ## Çäklendirmeler
 
@@ -279,15 +319,19 @@ supabase/
 - Supabase secret-lary ýok bolsa live saýt local demo režiminde işleýär;
 - Supabase bar, emma Turnstile site key ýok bolsa production forma iberişi ýapyk bolýar;
 - SQL migration-lar we Edge Function deployment aýratyn ýerine ýetirilmelidir;
-- Turnstile secret we rate-limit pepper Supabase secrets-de sazlanmalydyr;
+- portal e-poçta tassyklamasy üçin Auth Site URL we Redirect URLs sazlanmalydyr;
+- öňki guest arzalar täze hasaba awtomatik baglanmaýar;
+- kandidat/iş beriji parol dikeltmek interfeýsi entek ýok;
+- kandidat kabinetinde CV-ni täzeden ýüklemek ýa-da arzany yzyna almak entek ýok;
 - Resend domeni tassyklanmalydyr;
 - Telegram bot degişli chat-a habar ibermäge rugsatly bolmalydyr;
-- kandidat we iş beriji şahsy kabinetleri entek ýok;
 - resmi IDEGLI logo we gutarnykly brend reňkleri entek tassyklanmady.
 
 ## Indiki ýol kartasy
 
-1. Kandidat we iş beriji şahsy kabinetleri
-2. Hakyky IDEGLI logo, brend reňkleri we wakansiýalar
-3. SEO, analitika we hakyky domen
-4. Maglumat saklama möhleti we awtomatik privacy cleanup
+1. Parol dikeltmek we e-poçta üýtgetmek akymy
+2. Kandidat CV/anketa profilini gaýtadan ulanmak
+3. Iş beriji kompaniýa profili we birnäçe team member
+4. Hakyky IDEGLI logo, brend reňkleri we wakansiýalar
+5. SEO, analitika we hakyky domen
+6. Maglumat saklama möhleti we awtomatik privacy cleanup
