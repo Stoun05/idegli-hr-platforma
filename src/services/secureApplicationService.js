@@ -16,7 +16,7 @@ async function readError(response) {
   }
 }
 
-export async function submitSecureApplication(application) {
+export async function submitSecureApplication(application, portalSession = null) {
   if (!backendConfig.hasSupabase) throw new Error('Supabase is not configured.')
   if (!backendConfig.turnstileSiteKey) throw new Error('Turnstile site key is not configured.')
   if (!application.turnstileToken) throw new Error('Turnstile verification is required.')
@@ -34,11 +34,17 @@ export async function submitSecureApplication(application) {
     formData.append('cv', application.cvFile, application.cvFile.name)
   }
 
+  const headers = {
+    apikey: backendConfig.supabasePublishableKey,
+  }
+
+  if (portalSession?.accessToken) {
+    headers.Authorization = `Bearer ${portalSession.accessToken}`
+  }
+
   const response = await fetch(`${backendConfig.supabaseUrl}/functions/v1/submit-application`, {
     method: 'POST',
-    headers: {
-      apikey: backendConfig.supabasePublishableKey,
-    },
+    headers,
     body: formData,
   })
 
