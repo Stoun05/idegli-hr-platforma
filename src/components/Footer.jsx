@@ -1,7 +1,8 @@
 import '../footer.css'
+import '../portal-link.css'
 import { contactInfo } from '../data/companyContent.js'
 
-export default function Footer({ t }) {
+export default function Footer({ t, lang }) {
   return (
     <footer className="site-footer">
       <div className="footer-brand">
@@ -18,6 +19,7 @@ export default function Footer({ t }) {
         <a href="#about">{t.nav[2]}</a>
         <a href="#process">{t.nav[3]}</a>
         <a href="#contact">{t.nav[4]}</a>
+        <a className="footer-portal-link" href="#/portal">{lang === 'tm' ? 'Şahsy kabinet' : 'Личный кабинет'}</a>
         <a href="#/admin">{t.adminLink}</a>
       </div>
 
