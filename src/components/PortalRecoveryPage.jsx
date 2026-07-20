@@ -26,6 +26,12 @@ function portalUrl() {
   return `${window.location.origin}${import.meta.env.BASE_URL || '/'}#/portal`
 }
 
+function cleanRecoveryUrl() {
+  const url = new URL(import.meta.env.BASE_URL || '/', window.location.origin)
+  url.searchParams.set('portal', 'recovery')
+  window.history.replaceState({}, '', url.toString())
+}
+
 export default function PortalRecoveryPage({ lang, setLang }) {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -37,8 +43,12 @@ export default function PortalRecoveryPage({ lang, setLang }) {
   useEffect(() => {
     let active = true
 
-    consumePortalAuthCallback(['recovery'])
-      .then((nextSession) => { if (active) setSession(nextSession) })
+    consumePortalAuthCallback(['recovery'], { persist: false })
+      .then((nextSession) => {
+        if (!active) return
+        setSession(nextSession)
+        cleanRecoveryUrl()
+      })
       .catch((callbackError) => { if (active) setError(callbackError instanceof Error ? callbackError.message : t.invalid) })
       .finally(() => { if (active) setLoading(false) })
 
@@ -62,6 +72,7 @@ export default function PortalRecoveryPage({ lang, setLang }) {
       clearPortalSession()
       event.currentTarget.reset()
       setSuccess(true)
+      setSession(null)
     } catch (updateError) {
       setError(updateError instanceof Error ? updateError.message : t.invalid)
     } finally {
