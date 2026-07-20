@@ -3,11 +3,22 @@ import { saveApplication as saveLocalApplication } from './applicationStore.js'
 import { getValidPortalSession } from './portalAuthService.js'
 import { submitSecureApplication } from './secureApplicationService.js'
 
+function safeLocalCv(cv) {
+  if (!cv) return null
+
+  return {
+    name: cv.name || '',
+    size: Number(cv.size || 0),
+    type: cv.type || '',
+    source: cv.source || '',
+  }
+}
+
 function localApplication(application) {
   return {
     audience: application.audience,
     fields: application.fields,
-    cv: application.cv || null,
+    cv: safeLocalCv(application.cv),
   }
 }
 
