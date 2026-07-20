@@ -1,3 +1,5 @@
+import '../portal-link.css'
+
 export default function Header({ t, lang, menuOpen, setLang, setMenuOpen, scrollToForm }) {
   return (
     <header className="site-header">
@@ -22,6 +24,9 @@ export default function Header({ t, lang, menuOpen, setLang, setMenuOpen, scroll
         >
           {t.language}
         </button>
+        <a className="header-account-link" href="#/portal">
+          {lang === 'tm' ? 'Kabinet' : 'Кабинет'}
+        </a>
         <button className="header-cta" type="button" onClick={() => scrollToForm('employer')}>
           {t.findTalent}
         </button>
