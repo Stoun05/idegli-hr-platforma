@@ -1,5 +1,6 @@
 import { backendConfig, getBackendMode } from '../config/backend.js'
 import { saveApplication as saveLocalApplication } from './applicationStore.js'
+import { getValidPortalSession } from './portalAuthService.js'
 import { submitSecureApplication } from './secureApplicationService.js'
 
 function localApplication(application) {
@@ -28,7 +29,8 @@ export async function submitApplication(application) {
   }
 
   try {
-    const remoteRecord = await submitSecureApplication(application)
+    const portalSession = await getValidPortalSession()
+    const remoteRecord = await submitSecureApplication(application, portalSession)
 
     if (backendConfig.enableLocalAdminMirror) {
       saveLocalApplication(localApplication(application))
