@@ -7,9 +7,41 @@ create table if not exists public.portal_profiles (
   company text,
   phone text,
   city text,
+  candidate_role text,
+  candidate_experience_key text,
+  candidate_languages text,
+  candidate_salary text,
+  candidate_message text,
+  candidate_cv_metadata jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.portal_profiles
+  add column if not exists candidate_role text,
+  add column if not exists candidate_experience_key text,
+  add column if not exists candidate_languages text,
+  add column if not exists candidate_salary text,
+  add column if not exists candidate_message text,
+  add column if not exists candidate_cv_metadata jsonb;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'portal_profiles_candidate_experience_key_check'
+      and conrelid = 'public.portal_profiles'::regclass
+  ) then
+    alter table public.portal_profiles
+      add constraint portal_profiles_candidate_experience_key_check
+      check (
+        candidate_experience_key is null
+        or candidate_experience_key in ('none', 'junior', 'mid', 'senior')
+      );
+  end if;
+end;
+$$;
 
 alter table public.applications
   add column if not exists owner_id uuid references auth.users(id) on delete set null;
@@ -105,6 +137,12 @@ comment on table public.portal_profiles is
 
 comment on column public.portal_profiles.account_type is
   'Immutable portal account category used to match candidate or employer submissions.';
+
+comment on column public.portal_profiles.candidate_experience_key is
+  'Language-independent candidate experience key: none, junior, mid or senior.';
+
+comment on column public.portal_profiles.candidate_cv_metadata is
+  'Private reusable candidate profile CV metadata. Uploads are managed only by the authenticated portal Edge Function.';
 
 comment on column public.applications.owner_id is
   'Optional Supabase Auth owner. Public guest submissions remain null.';
