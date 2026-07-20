@@ -18,20 +18,23 @@ function portalRedirectUrl(flow) {
   return url.toString()
 }
 
-function persistSession(payload, previousSession = null) {
+function createSession(payload, previousSession = null) {
   const nextExpiry = payload.expires_at
     || (payload.expires_in ? Math.floor(Date.now() / 1000) + Number(payload.expires_in) : 0)
     || previousSession?.expiresAt
     || Math.floor(Date.now() / 1000) + 3600
 
-  const session = {
+  return {
     accessToken: payload.access_token || previousSession?.accessToken || '',
     refreshToken: payload.refresh_token || previousSession?.refreshToken || '',
     expiresAt: nextExpiry,
     tokenType: payload.token_type || previousSession?.tokenType || 'bearer',
     user: payload.user || previousSession?.user || null,
   }
+}
 
+function persistSession(payload, previousSession = null) {
+  const session = createSession(payload, previousSession)
   window.localStorage.setItem(PORTAL_SESSION_KEY, JSON.stringify(session))
   return session
 }
@@ -73,7 +76,7 @@ async function fetchPortalUser(accessToken) {
   return payload.user || payload
 }
 
-async function updatePortalUser(session, attributes, redirectFlow = '') {
+async function updatePortalUser(session, attributes, redirectFlow = '', shouldPersist = true) {
   const response = await fetch(
     authUrl('user', redirectFlow ? portalRedirectUrl(redirectFlow) : ''),
     {
@@ -93,7 +96,7 @@ async function updatePortalUser(session, attributes, redirectFlow = '') {
   const user = payload.user || payload
   return {
     user,
-    session: persistSession({ user }, session),
+    session: shouldPersist ? persistSession({ user }, session) : createSession({ user }, session),
   }
 }
 
@@ -158,7 +161,7 @@ export async function requestPortalPasswordReset(email) {
   return true
 }
 
-export async function consumePortalAuthCallback(expectedTypes = []) {
+export async function consumePortalAuthCallback(expectedTypes = [], options = {}) {
   if (!backendConfig.hasSupabase) throw new Error('Supabase is not configured.')
 
   const params = authFragment()
@@ -174,14 +177,16 @@ export async function consumePortalAuthCallback(expectedTypes = []) {
   if (!accessToken) throw new Error('Authentication token is missing or expired.')
 
   const user = await fetchPortalUser(accessToken)
-  return persistSession({
+  const payload = {
     access_token: accessToken,
     refresh_token: params.get('refresh_token') || '',
     expires_in: Number(params.get('expires_in') || 3600),
     expires_at: Number(params.get('expires_at') || 0) || undefined,
     token_type: params.get('token_type') || 'bearer',
     user,
-  })
+  }
+
+  return options.persist === false ? createSession(payload) : persistSession(payload)
 }
 
 export async function refreshPortalSession(session) {
@@ -236,7 +241,7 @@ export async function changePortalPassword(session, { currentPassword = '', newP
 }
 
 export async function completePortalPasswordRecovery(session, newPassword) {
-  return updatePortalUser(session, { password: newPassword })
+  return updatePortalUser(session, { password: newPassword }, '', false)
 }
 
 export async function changePortalEmail(session, { newEmail, currentPassword }) {
