@@ -63,8 +63,14 @@ export default function PortalDashboard({ lang, setLang, session, profile, appli
 
   const submitProfile = async (event) => {
     event.preventDefault()
-    await onSaveProfile?.(form)
-    setSaved(true)
+    setSaved(false)
+
+    try {
+      await onSaveProfile?.(form)
+      setSaved(true)
+    } catch {
+      setSaved(false)
+    }
   }
 
   return (
