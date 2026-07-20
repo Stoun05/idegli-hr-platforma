@@ -1,90 +1,126 @@
 # IDEGLI private CV Storage sazlamasy
 
-Bu bölüm kandidat CV faýllaryny public URL däl-de, private Supabase Storage bucket-de saklaýar. Public brauzer Storage-a göni upload etmeýär; ähli production upload-lar `submit-application` Edge Function service role arkaly ýerine ýetirilýär.
+Kandidat CV faýllary public URL däl-de, private `candidate-cvs` Supabase Storage bucket-de saklanýar. Brauzer Storage-a göni upload etmeýär; production upload, copy, replace we delete hereketleri Edge Function service role arkaly ýerine ýetirilýär.
 
-## 1. SQL faýllaryny işletmek
+## 1. SQL faýllary
 
-Supabase Dashboard → SQL Editor bölüminde:
+Supabase SQL Editor-de:
 
 ```text
 supabase/schema.sql
 supabase/storage.sql
+supabase/portal_accounts.sql
 supabase/abuse_protection.sql
 ```
 
 `storage.sql`:
 
 - `candidate-cvs` private bucket döredýär;
-- faýl ölçegini 5 MB bilen çäklendirýär;
+- iň köp 5 MB çäk goýýar;
 - diňe PDF, DOC we DOCX MIME görnüşlerine rugsat berýär;
 - public/anonymous upload syýasatlaryny aýyrýar;
-- diňe `admin` we `hr` roluna private CV-ni okamak we pozmak rugsadyny berýär.
+- diňe `admin` we `hr` roluna private application CV-ni okamak we pozmak rugsadyny berýär.
 
-Service role RLS-den geçip upload edýär, ýöne bu açar diňe Supabase Edge Function server gurşawynda bolýar.
+`portal_accounts.sql` kandidat profiliniň CV metadata-syny `portal_profiles.candidate_cv_metadata` sütüninde saklaýar.
 
-## 2. Frontend we Edge Function sazlamasy
+## 2. Storage ýollary
 
-GitHub Pages frontend üçin:
-
-```text
-VITE_SUPABASE_URL
-VITE_SUPABASE_PUBLISHABLE_KEY
-VITE_TURNSTILE_SITE_KEY
-```
-
-Edge Function secrets üçin:
+Kabinetde gaýtadan ulanylýan esasy CV:
 
 ```text
-TURNSTILE_SECRET_KEY
-RATE_LIMIT_PEPPER
-ALLOWED_SITE_ORIGINS
-TURNSTILE_ALLOWED_HOSTNAMES
+candidate-cvs/profiles/<auth-user-id>/<random-id>.<ext>
 ```
 
-`service_role`, Turnstile secret ýa-da beýleki private açar frontend-e goşulmaýar.
-
-## 3. Kandidat iş akymy
-
-Kandidat formany iberende:
-
-1. Faýl görnüşi we 5 MB çägi frontendde barlanýar.
-2. Cloudflare Turnstile tokeni Edge Function-da Siteverify arkaly tassyklanýar.
-3. IP we kontakt boýunça hash rate-limit barlanýar.
-4. Edge Function öňünden application UUID döredýär.
-5. CV şu private ýola ýüklenýär:
+Aýratyn arza CV-si:
 
 ```text
-candidate-cvs/applications/<application-id>/<random-id>.pdf
+candidate-cvs/applications/<application-id>/<random-id>.<ext>
 ```
 
-6. `applications.cv_metadata` içine bucket, storage ýol, original at, ölçeg we MIME görnüşi ýazylýar.
-7. Arza INSERT şowsuz bolsa, ýüklenen CV awtomatik pozulýar.
+Storage ýolunda original faýl ady ulanylmaýar. Original at diňe private JSON metadata hökmünde saklanýar.
 
-## 4. Admin akymy
+## 3. Kandidat profil CV akymy
 
-`admin` ýa-da `hr` ulanyjy:
+`portal-profile` Edge Function:
 
-- Supabase Auth JWT bilen private CV-ni ýükläp alýar;
-- arza pozulanda degişli CV-ni hem Storage-dan pozýar.
+1. Portal JWT-ni Supabase Auth arkaly barlaýar.
+2. `portal_profiles.account_type = candidate` bolmagyny talap edýär.
+3. Faýlyň görnüşini we 5 MB çägini serverde barlaýar.
+4. Täze CV-ni `profiles/<user-id>/...` ýoluna upload edýär.
+5. Database update şowsuz bolsa täze faýly pozýar.
+6. Update üstünlikli bolsa öňki profil CV-sini pozýar.
+7. Kandidat CV-ni aýyrsa metadata arassalanýar we degişli private faýl pozulýar.
 
-Bucket private bolany üçin açyk public URL ýok. Kandidat submit edenden soň faýly göni açyp bilmeýär; faýl diňe HR tarapyndan iş maksady bilen dolandyrylýar.
+Public ulanyjy Storage API arkaly bu ýola göni upload edip bilmeýär.
 
-## 5. Howpsuzlyk
+## 4. Profil CV bilen arza ibermek
+
+Girişli kandidat public formany açanda kabinetdäki CV-ni saýlap biler.
+
+`submit-application` Edge Function:
+
+1. Portal JWT we account type maglumatyny barlaýar.
+2. `candidate_cv_metadata.storagePath` ýolunyň şol ulanyja degişli `profiles/<user-id>/` prefiksi bilen başlanýandygyny barlaýar.
+3. Profil CV-sini `applications/<application-id>/...` ýoluna private server-side copy edýär.
+4. Täze application metadata-syna `source = portal-profile-copy` ýazýar.
+5. Application INSERT şowsuz bolsa nusgalanan faýly pozýar.
+
+Application öz aýratyn CV nusgasyny alýar. Şonuň üçin kandidat soň kabinetdäki esasy CV-ni çalşanda ýa-da pozanda öňki arzalaryň CV faýllary üýtgemeýär.
+
+## 5. Täze faýl bilen arza ibermek
+
+Kandidat forma üçin başga CV saýlasa:
+
+1. Frontend extension we 5 MB çägini barlaýar.
+2. Turnstile we rate-limit geçirilýär.
+3. Edge Function faýly göni `applications/<application-id>/...` ýoluna upload edýär.
+4. `applications.cv_metadata.source = selected-file` bolýar.
+5. DB INSERT şowsuz bolsa upload yzyna pozulýar.
+
+## 6. Edge Functions
+
+```text
+portal-profile
+submit-application
+```
+
+Deployment:
+
+```bash
+supabase functions deploy portal-profile --project-ref YOUR_PROJECT_REF
+supabase functions deploy submit-application --project-ref YOUR_PROJECT_REF
+```
+
+Iki function hem `ALLOWED_SITE_ORIGINS` secret-i ulanýar. `submit-application` goşmaça Turnstile we rate-limit secret-laryny talap edýär.
+
+## 7. Admin akymy
+
+`admin` ýa-da `hr`:
+
+- application CV-ni Supabase Auth JWT bilen download edýär;
+- arza pozulanda degişli `applications/...` CV nusgasyny hem pozýar.
+
+Profil CV-si kandidat tarapyndan replace/delete edilýär. Ol application CV nusgalaryndan aýratyn saklanýar.
+
+## 8. Howpsuzlyk
 
 - Public REST arkaly Storage upload rugsady ýok.
-- Public `applications` INSERT rugsady hem ýok.
-- Turnstile secret diňe Edge Function secrets-de saklanýar.
-- CV-niň original ady diňe metadata hökmünde saklanýar; storage ýol tötänleýin UUID-lardan durýar.
-- Admin download we delete hereketleri Storage RLS tarapyndan `admin`/`hr` roly bilen barlanýar.
+- Kandidat profil CV update-i diňe authenticated Edge Function arkaly işleýär.
+- `service_role` diňe Supabase server gurşawynda bolýar.
+- Profil CV başga ulanyjynyň ýolundan nusgalanyp bilinmeýär.
+- Bucket private; açyk public URL ýok.
+- Faýl görnüşi we ölçegi frontendde hem, Edge Function-da hem barlanýar.
+- Application CV we profile CV lifecycle-lary aýratyn.
 
-## 6. Barlaýyş
+## 9. Barlaýyş
 
-1. `schema.sql`, `storage.sql`, `abuse_protection.sql` işlediň.
-2. `submit-application` Edge Function secret-laryny sazlaň we deploy ediň.
-3. GitHub Pages-de Turnstile site key goşuň.
-4. Kandidat formasyny CV bilen dolduryň.
-5. Storage → `candidate-cvs/applications/...` içinde private faýly barlaň.
-6. `applications.cv_metadata.storagePath` maglumatyny barlaň.
-7. Public publishable key bilen göni Storage upload synanyşygynyň ret edilýändigini barlaň.
-8. `#/admin` arkaly HR hasaby bilen CV-ni ýükläp almagy barlaň.
-9. Arzany pozup, faýlyň bucket-den hem ýok bolandygyny barlaň.
+1. `schema.sql`, `storage.sql`, `portal_accounts.sql`, `abuse_protection.sql` işlediň.
+2. `portal-profile` we `submit-application` function-laryny deploy ediň.
+3. Kandidat kabinetinde PDF/DOC/DOCX CV goşuň.
+4. Storage-da `candidate-cvs/profiles/<user-id>/...` ýoluny barlaň.
+5. `portal_profiles.candidate_cv_metadata` maglumatyny barlaň.
+6. Täze arzada kabinetdäki CV-ni saýlaň.
+7. Storage-da täze `candidate-cvs/applications/<application-id>/...` nusgasyny barlaň.
+8. Profil CV-ni çalşyryp, öňki application CV nusgasynyň saklanýandygyny barlaň.
+9. Public publishable key bilen göni Storage upload synanyşygynyň ret edilýändigini barlaň.
+10. HR admin panelinde application CV-ni download etmegi barlaň.
