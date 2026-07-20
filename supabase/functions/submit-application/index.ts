@@ -14,6 +14,11 @@ const CV_BUCKET = 'candidate-cvs'
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false, autoRefreshToken: false } })
 const candidateKeys = ['name', 'phone', 'email', 'city', 'role', 'experience', 'languages', 'salary', 'message']
 const employerKeys = ['name', 'phone', 'email', 'company', 'industry', 'contactRole', 'website', 'vacancy', 'headcount', 'location', 'workType', 'requiredExperience', 'employmentType', 'salaryFrom', 'salaryTo', 'startDate', 'deadline', 'responsibilities', 'requirements', 'offer', 'message', 'confidential']
+const cvMimeByExtension: Record<string, string> = {
+  pdf: 'application/pdf',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+}
 
 class PublicError extends Error {
   code: string
@@ -95,7 +100,7 @@ async function portalOwner(request: Request, audience: 'candidate' | 'employer')
 
   const { data: profile, error: profileError } = await supabase
     .from('portal_profiles')
-    .select('account_type')
+    .select('account_type, candidate_cv_metadata')
     .eq('id', userData.user.id)
     .single()
 
@@ -107,7 +112,7 @@ async function portalOwner(request: Request, audience: 'candidate' | 'employer')
     throw new PublicError('Portal account type does not match this form.', 'portal_account_mismatch', 403)
   }
 
-  return userData.user.id
+  return { id: userData.user.id, profile }
 }
 
 async function verifyTurnstile(token: string, ip: string) {
@@ -160,7 +165,8 @@ Deno.serve(async (request) => {
     if (!audience || !payload.consent || !['tm', 'ru'].includes(payload.locale)) throw new PublicError('Form data is invalid.')
 
     const fields = sanitizeFields(audience, payload.fields)
-    const ownerId = await portalOwner(request, audience)
+    const owner = await portalOwner(request, audience)
+    const ownerId = owner?.id || null
     contactHash = await sha256(`contact:${String(fields.email)}:${String(fields.phone)}`)
     if (!token || token.length > 2048) throw new PublicError('Complete the security check.', 'captcha_required')
     if (!await verifyTurnstile(token, requestIp(request))) throw new PublicError('Security verification expired or failed. Try again.', 'captcha_failed')
@@ -180,15 +186,44 @@ Deno.serve(async (request) => {
 
     if (audience === 'candidate') {
       const cv = formData.get('cv')
-      if (!(cv instanceof File) || cv.size === 0) throw new PublicError('Candidate CV is required.')
-      const extension = cv.name.split('.').pop()?.toLowerCase() || ''
-      const mime = ({ pdf: 'application/pdf', doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' } as Record<string, string>)[extension]
-      if (!mime || cv.size > MAX_CV_SIZE) throw new PublicError('CV must be PDF, DOC or DOCX and no larger than 5 MB.')
 
-      uploadedPath = `applications/${applicationId}/${crypto.randomUUID()}.${extension}`
-      const { error } = await supabase.storage.from(CV_BUCKET).upload(uploadedPath, cv, { contentType: mime, cacheControl: '0', upsert: false })
-      if (error) throw error
-      cvMetadata = { bucket: CV_BUCKET, storagePath: uploadedPath, name: cv.name.slice(0, 255), size: cv.size, type: mime, uploadedAt: new Date().toISOString() }
+      if (cv instanceof File && cv.size > 0) {
+        const extension = cv.name.split('.').pop()?.toLowerCase() || ''
+        const mime = cvMimeByExtension[extension]
+        if (!mime || cv.size > MAX_CV_SIZE) throw new PublicError('CV must be PDF, DOC or DOCX and no larger than 5 MB.')
+
+        uploadedPath = `applications/${applicationId}/${crypto.randomUUID()}.${extension}`
+        const { error } = await supabase.storage.from(CV_BUCKET).upload(uploadedPath, cv, { contentType: mime, cacheControl: '0', upsert: false })
+        if (error) throw error
+        cvMetadata = { bucket: CV_BUCKET, storagePath: uploadedPath, name: cv.name.slice(0, 255), size: cv.size, type: mime, uploadedAt: new Date().toISOString(), source: 'selected-file' }
+      } else if (payload.useProfileCv === true && ownerId) {
+        const profileCv = owner?.profile?.candidate_cv_metadata as Record<string, unknown> | null
+        const sourcePath = typeof profileCv?.storagePath === 'string' ? profileCv.storagePath : ''
+        const sourceName = typeof profileCv?.name === 'string' ? profileCv.name : 'candidate-cv'
+        const extension = sourcePath.split('.').pop()?.toLowerCase() || sourceName.split('.').pop()?.toLowerCase() || ''
+        const mime = cvMimeByExtension[extension]
+        const size = Number(profileCv?.size || 0)
+
+        if (!sourcePath.startsWith(`profiles/${ownerId}/`) || !mime || size <= 0 || size > MAX_CV_SIZE) {
+          throw new PublicError('The CV saved in your portal profile is missing or invalid.', 'profile_cv_invalid')
+        }
+
+        uploadedPath = `applications/${applicationId}/${crypto.randomUUID()}.${extension}`
+        const { error: copyError } = await supabase.storage.from(CV_BUCKET).copy(sourcePath, uploadedPath)
+        if (copyError) throw copyError
+
+        cvMetadata = {
+          bucket: CV_BUCKET,
+          storagePath: uploadedPath,
+          name: sourceName.slice(0, 255),
+          size,
+          type: mime,
+          uploadedAt: new Date().toISOString(),
+          source: 'portal-profile-copy',
+        }
+      } else {
+        throw new PublicError('Candidate CV is required.', 'cv_required')
+      }
     }
 
     const { error } = await supabase.from('applications').insert({
@@ -198,7 +233,7 @@ Deno.serve(async (request) => {
     if (error) throw error
 
     await logAttempt({ audience, ip_hash: ipHash, contact_hash: contactHash, outcome: 'accepted' })
-    return reply(origin, { ok: true, applicationId, mode: 'supabase', linkedToPortal: Boolean(ownerId) }, 201)
+    return reply(origin, { ok: true, applicationId, mode: 'supabase', linkedToPortal: Boolean(ownerId), usedProfileCv: cvMetadata?.source === 'portal-profile-copy' }, 201)
   } catch (error) {
     if (uploadedPath) await supabase.storage.from(CV_BUCKET).remove([uploadedPath]).catch(() => null)
     const isPublic = error instanceof PublicError
