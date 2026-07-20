@@ -28,7 +28,7 @@ class PublicError extends Error {
 function cors(origin: string) {
   return {
     'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Headers': 'apikey, content-type',
+    'Access-Control-Allow-Headers': 'apikey, authorization, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Vary': 'Origin',
   }
@@ -81,6 +81,35 @@ function sanitizeFields(audience: 'candidate' | 'employer', source: unknown) {
   return fields
 }
 
+async function portalOwner(request: Request, audience: 'candidate' | 'employer') {
+  const authorization = request.headers.get('authorization') || ''
+  if (!authorization.toLowerCase().startsWith('bearer ')) return null
+
+  const token = authorization.slice(7).trim()
+  if (!token) return null
+
+  const { data: userData, error: userError } = await supabase.auth.getUser(token)
+  if (userError || !userData.user) {
+    throw new PublicError('Portal session expired. Log in again.', 'portal_session_invalid', 401)
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from('portal_profiles')
+    .select('account_type')
+    .eq('id', userData.user.id)
+    .single()
+
+  if (profileError || !profile) {
+    throw new PublicError('Portal profile could not be verified.', 'portal_profile_missing', 403)
+  }
+
+  if (profile.account_type !== audience) {
+    throw new PublicError('Portal account type does not match this form.', 'portal_account_mismatch', 403)
+  }
+
+  return userData.user.id
+}
+
 async function verifyTurnstile(token: string, ip: string) {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 8000)
@@ -131,6 +160,7 @@ Deno.serve(async (request) => {
     if (!audience || !payload.consent || !['tm', 'ru'].includes(payload.locale)) throw new PublicError('Form data is invalid.')
 
     const fields = sanitizeFields(audience, payload.fields)
+    const ownerId = await portalOwner(request, audience)
     contactHash = await sha256(`contact:${String(fields.email)}:${String(fields.phone)}`)
     if (!token || token.length > 2048) throw new PublicError('Complete the security check.', 'captcha_required')
     if (!await verifyTurnstile(token, requestIp(request))) throw new PublicError('Security verification expired or failed. Try again.', 'captcha_failed')
@@ -162,13 +192,13 @@ Deno.serve(async (request) => {
     }
 
     const { error } = await supabase.from('applications').insert({
-      id: applicationId, audience, status: 'new', source: 'secure-edge', locale: payload.locale,
-      fields, cv_metadata: cvMetadata, submitter_id: null, consent: true,
+      id: applicationId, audience, status: 'new', source: ownerId ? 'portal-edge' : 'secure-edge', locale: payload.locale,
+      fields, cv_metadata: cvMetadata, submitter_id: null, owner_id: ownerId, consent: true,
     })
     if (error) throw error
 
     await logAttempt({ audience, ip_hash: ipHash, contact_hash: contactHash, outcome: 'accepted' })
-    return reply(origin, { ok: true, applicationId, mode: 'supabase' }, 201)
+    return reply(origin, { ok: true, applicationId, mode: 'supabase', linkedToPortal: Boolean(ownerId) }, 201)
   } catch (error) {
     if (uploadedPath) await supabase.storage.from(CV_BUCKET).remove([uploadedPath]).catch(() => null)
     const isPublic = error instanceof PublicError
