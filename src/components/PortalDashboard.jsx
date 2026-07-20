@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import '../portal.css'
+import PortalSecurityPanel from './PortalSecurityPanel.jsx'
 
 const copy = {
   tm: {
@@ -43,7 +44,10 @@ function formatDate(value, lang) {
   return value ? new Date(value).toLocaleString(lang === 'tm' ? 'tk-TM' : 'ru-RU') : '—'
 }
 
-export default function PortalDashboard({ lang, setLang, session, profile, applications, busy, error, onRefresh, onSaveProfile, onLogout }) {
+export default function PortalDashboard({
+  lang, setLang, session, profile, applications, busy, error,
+  onRefresh, onSaveProfile, onChangePassword, onSendNonce, onChangeEmail, onLogout,
+}) {
   const [form, setForm] = useState(profile)
   const [saved, setSaved] = useState(false)
   const t = copy[lang]
@@ -52,9 +56,7 @@ export default function PortalDashboard({ lang, setLang, session, profile, appli
   const accountLabel = profile.accountType === 'candidate' ? t.candidate : t.employer
   const applyHash = profile.accountType === 'candidate' ? '#apply-candidate' : '#apply-employer'
 
-  useEffect(() => {
-    setForm(profile)
-  }, [profile])
+  useEffect(() => { setForm(profile) }, [profile])
 
   const update = (key, value) => {
     setSaved(false)
@@ -64,7 +66,6 @@ export default function PortalDashboard({ lang, setLang, session, profile, appli
   const submitProfile = async (event) => {
     event.preventDefault()
     setSaved(false)
-
     try {
       await onSaveProfile?.(form)
       setSaved(true)
@@ -88,11 +89,7 @@ export default function PortalDashboard({ lang, setLang, session, profile, appli
 
       <section className="portal-dashboard-main">
         <div className="portal-dashboard-title">
-          <div>
-            <span>{accountLabel} / IDEGLI</span>
-            <h1>{t.title}</h1>
-            <p>{t.secure}</p>
-          </div>
+          <div><span>{accountLabel} / IDEGLI</span><h1>{t.title}</h1><p>{t.secure}</p></div>
           <a className="portal-primary-button portal-new-application" href={applyHash}>{t.newApplication}</a>
         </div>
 
@@ -105,22 +102,32 @@ export default function PortalDashboard({ lang, setLang, session, profile, appli
         </div>
 
         <div className="portal-dashboard-grid">
-          <section className="portal-profile-card">
-            <div className="portal-section-heading"><h2>{t.profile}</h2><span>{accountLabel}</span></div>
-            <form onSubmit={submitProfile}>
-              <label><span>{t.fullName}</span><input required value={form.fullName || ''} onChange={(event) => update('fullName', event.target.value)} /></label>
-              {profile.accountType === 'employer' && <label><span>{t.company}</span><input required value={form.company || ''} onChange={(event) => update('company', event.target.value)} /></label>}
-              <label><span>{t.email}</span><input disabled value={session.user?.email || ''} /></label>
-              <label><span>{t.phone}</span><input type="tel" value={form.phone || ''} onChange={(event) => update('phone', event.target.value)} /></label>
-              <label><span>{t.city}</span><input value={form.city || ''} onChange={(event) => update('city', event.target.value)} /></label>
-              {saved && <p className="portal-saved" role="status">{t.saved}</p>}
-              <button className="portal-primary-button" type="submit" disabled={busy}>{busy ? t.saving : t.save}</button>
-            </form>
-          </section>
+          <div className="portal-sidebar">
+            <section className="portal-profile-card">
+              <div className="portal-section-heading"><h2>{t.profile}</h2><span>{accountLabel}</span></div>
+              <form onSubmit={submitProfile}>
+                <label><span>{t.fullName}</span><input required value={form.fullName || ''} onChange={(event) => update('fullName', event.target.value)} /></label>
+                {profile.accountType === 'employer' && <label><span>{t.company}</span><input required value={form.company || ''} onChange={(event) => update('company', event.target.value)} /></label>}
+                <label><span>{t.email}</span><input disabled value={session.user?.email || ''} /></label>
+                <label><span>{t.phone}</span><input type="tel" value={form.phone || ''} onChange={(event) => update('phone', event.target.value)} /></label>
+                <label><span>{t.city}</span><input value={form.city || ''} onChange={(event) => update('city', event.target.value)} /></label>
+                {saved && <p className="portal-saved" role="status">{t.saved}</p>}
+                <button className="portal-primary-button" type="submit" disabled={busy}>{busy ? t.saving : t.save}</button>
+              </form>
+            </section>
+
+            <PortalSecurityPanel
+              lang={lang}
+              email={session.user?.email || ''}
+              busy={busy}
+              onChangePassword={onChangePassword}
+              onSendNonce={onSendNonce}
+              onChangeEmail={onChangeEmail}
+            />
+          </div>
 
           <section className="portal-applications-card">
             <div className="portal-section-heading"><h2>{t.applications}</h2><span>{applications.length}</span></div>
-
             {applications.length ? (
               <div className="portal-application-list">
                 {applications.map((application) => (
@@ -129,29 +136,18 @@ export default function PortalDashboard({ lang, setLang, session, profile, appli
                       <div><span>{application.audience === 'candidate' ? t.candidate : t.employer}</span><h3>{titleOf(application)}</h3><p>{secondaryOf(application)}</p></div>
                       <strong className={`portal-status status-${application.status}`}>{labels[application.status] || application.status}</strong>
                     </div>
-                    <div className="portal-application-dates">
-                      <span>{t.created}: {formatDate(application.createdAt, lang)}</span>
-                      <span>{t.updated}: {formatDate(application.updatedAt, lang)}</span>
-                    </div>
-                    <details>
-                      <summary>{t.details}</summary>
-                      <div className="portal-field-grid">
-                        {Object.entries(application.fields || {}).map(([key, value]) => value !== '' && value != null ? (
-                          <div key={key}><span>{key}</span><strong>{typeof value === 'boolean' ? (value ? '✓' : '—') : String(value)}</strong></div>
-                        ) : null)}
-                        {application.cv && <div><span>{t.cv}</span><strong>{application.cv.name}</strong></div>}
-                      </div>
-                    </details>
+                    <div className="portal-application-dates"><span>{t.created}: {formatDate(application.createdAt, lang)}</span><span>{t.updated}: {formatDate(application.updatedAt, lang)}</span></div>
+                    <details><summary>{t.details}</summary><div className="portal-field-grid">
+                      {Object.entries(application.fields || {}).map(([key, value]) => value !== '' && value != null ? (
+                        <div key={key}><span>{key}</span><strong>{typeof value === 'boolean' ? (value ? '✓' : '—') : String(value)}</strong></div>
+                      ) : null)}
+                      {application.cv && <div><span>{t.cv}</span><strong>{application.cv.name}</strong></div>}
+                    </div></details>
                   </article>
                 ))}
               </div>
             ) : (
-              <div className="portal-empty-state">
-                <span>0</span>
-                <h3>{t.emptyTitle}</h3>
-                <p>{profile.accountType === 'candidate' ? t.emptyCandidate : t.emptyEmployer}</p>
-                <a href={applyHash}>{t.newApplication}</a>
-              </div>
+              <div className="portal-empty-state"><span>0</span><h3>{t.emptyTitle}</h3><p>{profile.accountType === 'candidate' ? t.emptyCandidate : t.emptyEmployer}</p><a href={applyHash}>{t.newApplication}</a></div>
             )}
           </section>
         </div>
