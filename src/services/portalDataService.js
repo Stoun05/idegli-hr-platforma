@@ -20,7 +20,7 @@ async function parseFailure(response, fallback) {
   }
 }
 
-function normalizeProfile(row) {
+export function normalizePortalProfile(row) {
   return {
     id: row.id,
     accountType: row.account_type,
@@ -28,6 +28,14 @@ function normalizeProfile(row) {
     company: row.company || '',
     phone: row.phone || '',
     city: row.city || '',
+    candidateProfile: {
+      role: row.candidate_role || '',
+      experienceKey: row.candidate_experience_key || '',
+      languages: row.candidate_languages || '',
+      salary: row.candidate_salary || '',
+      message: row.candidate_message || '',
+      cv: row.candidate_cv_metadata || null,
+    },
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -46,37 +54,41 @@ function normalizeApplication(row) {
   }
 }
 
+export async function fetchPortalProfile(accessToken, userId) {
+  const response = await fetch(
+    `${backendConfig.supabaseUrl}/rest/v1/portal_profiles?id=eq.${encodeURIComponent(userId)}&select=*`,
+    { headers: headers(accessToken) },
+  )
+
+  if (!response.ok) {
+    throw new Error(await parseFailure(response, 'Portal profile could not be loaded.'))
+  }
+
+  const rows = await response.json()
+  if (!rows[0]) {
+    throw new Error('Portal profile is missing. Run portal_accounts.sql or contact IDEGLI support.')
+  }
+
+  return normalizePortalProfile(rows[0])
+}
+
 export async function fetchPortalData(accessToken, userId) {
-  const [profileResponse, applicationsResponse] = await Promise.all([
-    fetch(
-      `${backendConfig.supabaseUrl}/rest/v1/portal_profiles?id=eq.${encodeURIComponent(userId)}&select=*`,
-      { headers: headers(accessToken) },
-    ),
+  const [profile, applicationsResponse] = await Promise.all([
+    fetchPortalProfile(accessToken, userId),
     fetch(
       `${backendConfig.supabaseUrl}/rest/v1/applications?owner_id=eq.${encodeURIComponent(userId)}&select=*&order=created_at.desc&limit=200`,
       { headers: headers(accessToken) },
     ),
   ])
 
-  if (!profileResponse.ok) {
-    throw new Error(await parseFailure(profileResponse, 'Portal profile could not be loaded.'))
-  }
-
   if (!applicationsResponse.ok) {
     throw new Error(await parseFailure(applicationsResponse, 'Your applications could not be loaded.'))
   }
 
-  const [profileRows, applicationRows] = await Promise.all([
-    profileResponse.json(),
-    applicationsResponse.json(),
-  ])
-
-  if (!profileRows[0]) {
-    throw new Error('Portal profile is missing. Run portal_accounts.sql or contact IDEGLI support.')
-  }
+  const applicationRows = await applicationsResponse.json()
 
   return {
-    profile: normalizeProfile(profileRows[0]),
+    profile,
     applications: applicationRows.map(normalizeApplication),
   }
 }
@@ -104,5 +116,5 @@ export async function updatePortalProfile(accessToken, userId, changes) {
   }
 
   const rows = await response.json()
-  return normalizeProfile(rows[0])
+  return normalizePortalProfile(rows[0])
 }
