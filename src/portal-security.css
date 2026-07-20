@@ -6,6 +6,11 @@
   top: 20px;
 }
 
+.portal-sidebar .portal-profile-card {
+  position: static;
+  top: auto;
+}
+
 .portal-security-card {
   padding: 22px;
   border: 1px solid rgba(23, 35, 30, 0.1);
