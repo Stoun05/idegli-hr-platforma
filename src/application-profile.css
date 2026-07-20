@@ -1,0 +1,118 @@
+.candidate-autofill-banner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid rgba(216, 255, 99, 0.25);
+  border-radius: 14px;
+  background: rgba(216, 255, 99, 0.08);
+}
+
+.candidate-autofill-banner > span {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 11px;
+  color: #13231d;
+  background: #d8ff63;
+  font-size: 0.58rem;
+  font-weight: 900;
+}
+
+.candidate-autofill-banner strong,
+.candidate-autofill-banner small {
+  display: block;
+}
+
+.candidate-autofill-banner strong {
+  color: #f3f7f5;
+  font-size: 0.72rem;
+}
+
+.candidate-autofill-banner small {
+  margin-top: 4px;
+  color: rgba(243, 247, 245, 0.66);
+  font-size: 0.62rem;
+  line-height: 1.45;
+}
+
+.application-profile-cv {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.application-profile-cv.is-selected {
+  border-color: rgba(216, 255, 99, 0.4);
+  background: rgba(216, 255, 99, 0.08);
+}
+
+.application-profile-cv > span {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 10px;
+  color: #13231d;
+  background: #d8ff63;
+  font-size: 0.62rem;
+  font-weight: 900;
+}
+
+.application-profile-cv > div {
+  min-width: 0;
+}
+
+.application-profile-cv strong,
+.application-profile-cv small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.application-profile-cv strong {
+  color: #f3f7f5;
+  font-size: 0.7rem;
+}
+
+.application-profile-cv small {
+  margin-top: 4px;
+  color: rgba(243, 247, 245, 0.6);
+  font-size: 0.6rem;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+.application-profile-cv button {
+  min-height: 36px;
+  padding: 0 11px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  color: #d8ff63;
+  background: transparent;
+  font-size: 0.61rem;
+  font-weight: 800;
+}
+
+.application-profile-cv.is-selected button {
+  color: #13231d;
+  background: #d8ff63;
+}
+
+@media (max-width: 620px) {
+  .application-profile-cv {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .application-profile-cv button {
+    grid-column: 1 / -1;
+  }
+}
